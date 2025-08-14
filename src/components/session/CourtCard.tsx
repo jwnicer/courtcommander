@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Court, Match, Participant, QueueItem } from '@/types';
-import { api } from '@/lib/firebase';
+import { createIntent } from '@/lib/clientId';
 import { useToast } from '@/hooks/use-toast';
 import { CheckCircle, Loader2, User, Users, XCircle } from 'lucide-react';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '@/lib/utils';
+import { getClientId } from '@/lib/clientId';
 
 interface CourtCardProps {
   basePath: string;
@@ -25,7 +26,7 @@ interface CourtCardProps {
 export default function CourtCard({ basePath, court, match, players, canCoach, waitingQueue, gameType }: CourtCardProps) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const [orgId, venueId, sessionId] = basePath.split('/').slice(1, 4);
+  const clientId = getClientId();
 
   const handleCoachAssign = async () => {
     setLoading(true);
@@ -43,7 +44,7 @@ export default function CourtCard({ basePath, court, match, players, canCoach, w
     }
 
     try {
-      await api.coachOverrideAssign({ orgId, venueId, sessionId, courtId: court.id, playerIds });
+      await createIntent(basePath, 'coach_override_assign', clientId, { courtId: court.id, playerIds });
       toast({ title: 'Success', description: `Match assigned to ${court.name}.` });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Assignment Failed', description: error.message });
@@ -56,7 +57,7 @@ export default function CourtCard({ basePath, court, match, players, canCoach, w
     if (!match) return;
     setLoading(true);
     try {
-      await api.completeMatch({ orgId, venueId, sessionId, matchId: match.id });
+      await createIntent(basePath, 'complete_match', clientId, { matchId: match.id });
       toast({ title: 'Match Completed', description: `Match on ${court.name} is finished.` });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Failed to complete match', description: error.message });
