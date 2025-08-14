@@ -13,7 +13,7 @@ const firebaseConfig = {
   appId: '1:1069058311779:web:3ace110a32f6e66e565a56',
 };
 
-let app: FirebaseApp = getApps()[0] ?? initializeApp(firebaseConfig);
+let app: FirebaseApp = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const functions = getFunctions(app, 'us-central1');
