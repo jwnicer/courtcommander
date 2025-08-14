@@ -27,7 +27,24 @@ export default function SessionManager({ orgId, venueId, sessionId }: SessionMan
   useEffect(() => {
     const mockUser = getMockUser();
     setUser(mockUser);
-            
+    
+    // Simulate a registered but unpaid user to show the payment card directly.
+    setParticipant({
+      id: mockUser.uid,
+      userId: mockUser.uid,
+      nickname: 'MockPlayer',
+      level: 4,
+      age: 25,
+      paid: false,
+      checkedIn: false,
+      cooldown: 0,
+      lastMatchEndedAt: null,
+    });
+    setLoading(false);
+
+    // The original Firestore listener is commented out to force the mock state.
+    // To restore original behavior, uncomment the following block and remove the mock code above.
+    /*
     const participantRef = doc(db, `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}/participants/${mockUser.uid}`);
     const unsubscribeParticipant = onSnapshot(participantRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -43,6 +60,7 @@ export default function SessionManager({ orgId, venueId, sessionId }: SessionMan
     });
     
     return () => unsubscribeParticipant();
+    */
   }, [orgId, venueId, sessionId]);
 
   if (loading || participant === undefined) {
