@@ -6,7 +6,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/a
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getFirestore } from 'firebase/firestore';
 
-// IMPORTANT: Replace with your actual Firebase configuration in .env.local
+// IMPORTANT: This is a public configuration and is safe to be exposed client-side.
 const firebaseConfig = {
   apiKey: "AIzaSyDiJglQDPfqHtaXP4vsoMDZtZBtBSapAQw",
   authDomain: "court-commander-5cpco.firebaseapp.com",
@@ -30,7 +30,7 @@ export const functions = getFunctions(app, 'us-central1'); // Specify region if 
 
 // Auth helpers
 export const signInAnonymouslyIfNeeded = () => {
-  return new Promise((resolve, reject) => {
+  return new Promise<User>((resolve, reject) => {
     const authInstance = getAuth(app);
     const unsubscribe = onAuthStateChanged(authInstance, (user) => {
       unsubscribe();
@@ -41,7 +41,10 @@ export const signInAnonymouslyIfNeeded = () => {
           .then(userCredential => resolve(userCredential.user))
           .catch(error => reject(error));
       }
-    }, reject); // Added reject handler for onAuthStateChanged
+    }, (error) => {
+        console.error("onAuthStateChanged error:", error);
+        reject(error);
+    });
   });
 };
 
