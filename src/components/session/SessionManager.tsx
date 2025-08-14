@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import type { User } from 'firebase/auth';
-import { db, signInAnonymouslyIfNeeded } from '@/lib/firebase';
+import { db, getMockUser } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import type { Participant } from '@/types';
 import RegistrationForm from './RegistrationForm';
@@ -25,42 +25,24 @@ export default function SessionManager({ orgId, venueId, sessionId }: SessionMan
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const manageSignIn = async () => {
-        try {
-            const currentUser = await signInAnonymouslyIfNeeded() as User;
-            setUser(currentUser);
+    const mockUser = getMockUser();
+    setUser(mockUser);
             
-            if (currentUser) {
-                const participantRef = doc(db, `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}/participants/${currentUser.uid}`);
-                const unsubscribeParticipant = onSnapshot(participantRef, (docSnap) => {
-                  if (docSnap.exists()) {
-                    setParticipant({ id: docSnap.id, ...docSnap.data() } as Participant);
-                  } else {
-                    setParticipant(null);
-                  }
-                  setLoading(false);
-                }, (error) => {
-                    console.error("Error fetching participant data:", error);
-                    setParticipant(null);
-                    setLoading(false);
-                });
-                
-                return () => unsubscribeParticipant();
-            } else {
-                setParticipant(null);
-                setLoading(false);
-            }
-        } catch(e) {
-            console.error("Anonymous sign-in failed", e);
-            setLoading(false);
-        }
-    };
-
-    const unsubscribe = manageSignIn();
-
-    return () => {
-      unsubscribe.then(unsub => unsub && unsub());
-    };
+    const participantRef = doc(db, `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}/participants/${mockUser.uid}`);
+    const unsubscribeParticipant = onSnapshot(participantRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setParticipant({ id: docSnap.id, ...docSnap.data() } as Participant);
+      } else {
+        setParticipant(null);
+      }
+      setLoading(false);
+    }, (error) => {
+        console.error("Error fetching participant data:", error);
+        setParticipant(null);
+        setLoading(false);
+    });
+    
+    return () => unsubscribeParticipant();
   }, [orgId, venueId, sessionId]);
 
   if (loading || participant === undefined) {

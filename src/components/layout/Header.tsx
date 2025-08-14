@@ -1,4 +1,3 @@
-import { AuthButton } from "@/components/auth/AuthButton";
 
 const BadmintonIcon = () => (
   <svg
@@ -37,7 +36,6 @@ export function Header() {
             <span className="text-foreground">Commander</span>
           </h1>
         </div>
-        <AuthButton />
       </div>
     </header>
   );
