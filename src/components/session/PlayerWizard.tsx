@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getClientId, createIntent } from '@/lib/clientId';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,6 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 type Step = 'register' | 'pay' | 'confirm' | 'queue' | 'in_match';
 
 export default function PlayerWizard({ orgId, venueId, sessionId }: { orgId: string, venueId: string, sessionId: string }) {
-  const base = `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}`;
   const [clientId, setClientId] = useState<string | null>(null);
 
   const [cfg, setCfg] = useState<any>(null);
@@ -27,6 +26,8 @@ export default function PlayerWizard({ orgId, venueId, sessionId }: { orgId: str
   const [age, setAge] = useState(18);
   const [refCode, setRef] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  const base = `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}`;
 
   useEffect(() => {
     // getClientId is sync and uses localStorage, so it's safe to call here.
@@ -35,15 +36,35 @@ export default function PlayerWizard({ orgId, venueId, sessionId }: { orgId: str
 
   useEffect(() => {
     if (!clientId) return;
-    const unsubCfg = onSnapshot(doc(db, `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}/paymentConfig`), s => setCfg(s.data()));
     const unsubMe = onSnapshot(doc(db, `${base}/participants/${clientId}`), s => setMe(s.exists() ? { id: s.id, ...s.data() } : null));
     const unsubQueue = onSnapshot(doc(db, `${base}/queue/${clientId}`), s => setQueueEntry(s.exists() ? { id: s.id, ...s.data() } : null));
     return () => {
-      unsubCfg();
       unsubMe();
       unsubQueue();
     };
-  }, [base, clientId, orgId, venueId, sessionId]);
+  }, [base, clientId]);
+
+  useEffect(() => {
+    if (!orgId || !venueId || !sessionId) return;
+    
+    const venueBase = `orgs/${orgId}/venues/${venueId}`;
+    const sessionBase = `${venueBase}/sessions/${sessionId}`;
+    
+    const sessionPayDoc = doc(db, `${sessionBase}/settings/payment`);
+    const venuePayDoc = doc(db, `${venueBase}/settings/payment`);
+
+    const unsub = onSnapshot(sessionPayDoc, async (s) => {
+      if (s.exists()) {
+        setCfg(s.data());
+      } else {
+        const v = await getDoc(venuePayDoc);
+        setCfg(v.exists() ? v.data() : null);
+      }
+    });
+    return () => unsub();
+
+  }, [orgId, venueId, sessionId]);
+
 
   const step: Step = useMemo(() => {
     if (!me) return 'register';
