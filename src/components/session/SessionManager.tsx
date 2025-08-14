@@ -25,32 +25,19 @@ export default function SessionManager({ orgId, venueId, sessionId }: SessionMan
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // This setup now correctly simulates the entire flow from the beginning for a new player.
     const mockUser = getMockUser();
     setUser(mockUser);
     
-    // Simulate a registered AND paid user to show the dashboard directly.
-    setParticipant({
-      id: mockUser.uid,
-      userId: mockUser.uid,
-      nickname: 'MockPlayer',
-      level: 4,
-      age: 25,
-      paid: true, // This is now true to simulate payment confirmation
-      checkedIn: false,
-      cooldown: 0,
-      lastMatchEndedAt: null,
-    });
-    setLoading(false);
-
-    // The original Firestore listener is commented out to force the mock state.
-    // To restore original behavior, uncomment the following block and remove the mock code above.
-    /*
+    // The original Firestore listener is used to reflect real-time changes,
+    // such as a coach approving a payment.
+    // For demonstration, you would manually change the 'paid' status in your Firestore DB.
     const participantRef = doc(db, `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}/participants/${mockUser.uid}`);
     const unsubscribeParticipant = onSnapshot(participantRef, (docSnap) => {
       if (docSnap.exists()) {
         setParticipant({ id: docSnap.id, ...docSnap.data() } as Participant);
       } else {
-        setParticipant(null);
+        setParticipant(null); // No participant document found, start with registration.
       }
       setLoading(false);
     }, (error) => {
@@ -60,7 +47,6 @@ export default function SessionManager({ orgId, venueId, sessionId }: SessionMan
     });
     
     return () => unsubscribeParticipant();
-    */
   }, [orgId, venueId, sessionId]);
 
   if (loading || participant === undefined) {
@@ -79,18 +65,20 @@ export default function SessionManager({ orgId, venueId, sessionId }: SessionMan
     );
   }
 
+  // Step 1: User is not registered yet. Show the registration form.
   if (!participant) {
     return <RegistrationForm orgId={orgId} venueId={venueId} sessionId={sessionId} />;
   }
 
+  // Step 2: User is registered but hasn't paid. Show the payment card.
   if (!participant.paid) {
     return <PaymentCard orgId={orgId} venueId={venueId} sessionId={sessionId} />;
   }
 
-  // Role checking would happen here. For now, we assume a player role.
-  // Example: const isAdmin = user.claims.roles?.includes('admin');
-  const isAdmin = true; // Hardcoded to true for demonstration purposes
-  const canCoach = isAdmin; // Admins can do everything a coach can
+  // Step 3: User is registered and paid. Show the main dashboard.
+  // The Admin/Coach status is hardcoded here for demonstration.
+  const isAdmin = true; 
+  const canCoach = isAdmin; 
 
   return <SessionDashboard orgId={orgId} venueId={venueId} sessionId={sessionId} user={user} participant={participant} canCoach={canCoach} isAdmin={isAdmin} />;
 }
@@ -104,12 +92,13 @@ function SessionManagerSkeleton() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-1 space-y-4">
-                    <Skeleton className="h-32 w-full" />
-                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-96 w-full rounded-xl" />
                 </div>
-                <div className="lg:col-span-2 space-y-4">
-                    <Skeleton className="h-48 w-full" />
-                    <Skeleton className="h-48 w-full" />
+                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Skeleton className="h-60 w-full rounded-xl" />
+                    <Skeleton className="h-60 w-full rounded-xl" />
+                    <Skeleton className="h-60 w-full rounded-xl" />
+                    <Skeleton className="h-60 w-full rounded-xl" />
                 </div>
             </div>
         </div>
