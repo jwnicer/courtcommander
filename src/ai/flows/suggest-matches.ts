@@ -47,7 +47,7 @@ const prompt = ai.definePrompt({
   name: 'suggestMatchesPrompt',
   input: {schema: SuggestMatchesInputSchema},
   output: {schema: SuggestMatchesOutputSchema},
-  prompt: `You are an AI badminton match organizer. Given a player's skill level and a list of available players, suggest balanced matches.
+  prompt: `You are an AI badminton match organizer. Given a player\'s skill level and a list of available players, suggest balanced matches.
 
 Player Skill Level: {{{playerLevel}}}
 Available Players: {{#each availablePlayers}}{{{nickname}}} (Level: {{{level}}}), {{/each}}

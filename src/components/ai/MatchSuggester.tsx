@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { suggestMatches, SuggestMatchesOutput } from '@/ai/flows/suggest-matches';
 import type { Participant } from '@/types';
 import { Loader2, Sparkles, Users, User } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface MatchSuggesterProps {
   playerLevel: number;
