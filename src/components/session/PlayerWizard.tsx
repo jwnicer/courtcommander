@@ -35,7 +35,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId }: { orgId: str
 
   useEffect(() => {
     if (!clientId) return;
-    const unsubCfg = onSnapshot(doc(db, `orgs/${orgId}/venues/${venueId}/paymentConfig`), s => setCfg(s.data()));
+    const unsubCfg = onSnapshot(doc(db, `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}/paymentConfig`), s => setCfg(s.data()));
     const unsubMe = onSnapshot(doc(db, `${base}/participants/${clientId}`), s => setMe(s.exists() ? { id: s.id, ...s.data() } : null));
     const unsubQueue = onSnapshot(doc(db, `${base}/queue/${clientId}`), s => setQueueEntry(s.exists() ? { id: s.id, ...s.data() } : null));
     return () => {
@@ -43,7 +43,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId }: { orgId: str
       unsubMe();
       unsubQueue();
     };
-  }, [base, clientId, orgId, venueId]);
+  }, [base, clientId, orgId, venueId, sessionId]);
 
   const step: Step = useMemo(() => {
     if (!me) return 'register';
