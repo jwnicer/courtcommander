@@ -1,15 +1,18 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import type { User } from 'firebase/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LayoutDashboard, Sparkles, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Sparkles, Shield, Loader2 } from 'lucide-react';
 import LiveView from './LiveView';
 import MatchSuggester from '../ai/MatchSuggester';
+import AdminPanel from './AdminPanel';
 import { collection, onSnapshot, query, where, doc, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Court, Match, Participant, QueueItem, Session } from '@/types';
 import { Skeleton } from '../ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface SessionDashboardProps {
   orgId: string;
@@ -18,9 +21,10 @@ interface SessionDashboardProps {
   user: User;
   participant: Participant;
   canCoach: boolean;
+  isAdmin: boolean;
 }
 
-export default function SessionDashboard({ orgId, venueId, sessionId, user, participant, canCoach }: SessionDashboardProps) {
+export default function SessionDashboard({ orgId, venueId, sessionId, user, participant, canCoach, isAdmin }: SessionDashboardProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [courts, setCourts] = useState<Court[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
@@ -77,9 +81,10 @@ export default function SessionDashboard({ orgId, venueId, sessionId, user, part
 
   return (
     <Tabs defaultValue="live" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 md:w-[400px] mb-6">
+      <TabsList className={cn("grid w-full mb-6", isAdmin ? "grid-cols-3 md:w-[600px]" : "grid-cols-2 md:w-[400px]")}>
         <TabsTrigger value="live"><LayoutDashboard className="mr-2 h-4 w-4" />Live View</TabsTrigger>
         <TabsTrigger value="ai"><Sparkles className="mr-2 h-4 w-4" />AI Match Maker</TabsTrigger>
+        {isAdmin && <TabsTrigger value="admin"><Shield className="mr-2 h-4 w-4" />Admin Panel</TabsTrigger>}
       </TabsList>
       <TabsContent value="live">
         <LiveView
@@ -100,6 +105,15 @@ export default function SessionDashboard({ orgId, venueId, sessionId, user, part
           gameType={session?.gameType ?? 'doubles'}
         />
       </TabsContent>
+      {isAdmin && (
+        <TabsContent value="admin">
+            <AdminPanel 
+                session={session}
+                participants={participants}
+                courts={courts}
+            />
+        </TabsContent>
+      )}
     </Tabs>
   );
 }

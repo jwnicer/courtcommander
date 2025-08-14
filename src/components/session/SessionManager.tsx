@@ -88,10 +88,11 @@ export default function SessionManager({ orgId, venueId, sessionId }: SessionMan
   }
 
   // Role checking would happen here. For now, we assume a player role.
-  // Example: const canCoach = user.claims.roles?.includes('coach');
-  const canCoach = true; // Hardcoded to true for demonstration purposes
+  // Example: const isAdmin = user.claims.roles?.includes('admin');
+  const isAdmin = true; // Hardcoded to true for demonstration purposes
+  const canCoach = isAdmin; // Admins can do everything a coach can
 
-  return <SessionDashboard orgId={orgId} venueId={venueId} sessionId={sessionId} user={user} participant={participant} canCoach={canCoach} />;
+  return <SessionDashboard orgId={orgId} venueId={venueId} sessionId={sessionId} user={user} participant={participant} canCoach={canCoach} isAdmin={isAdmin} />;
 }
 
 
