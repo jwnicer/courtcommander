@@ -2,7 +2,7 @@
 import { Header } from "@/components/layout/Header";
 import PlayerWizard from "@/components/session/PlayerWizard";
 import { useEffect, useState } from 'react';
-import { onSnapshot, doc } from 'firebase/firestore';
+import { onSnapshot, doc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getClientId } from '@/lib/clientId';
 import LiveView from "@/components/session/LiveView";
@@ -32,10 +32,10 @@ export default function Home() {
 
   useEffect(() => {
     const unsubSession = onSnapshot(doc(db, basePath), (s) => setSession(s.data() as any));
-    const unsubCourts = onSnapshot(doc(db, basePath).collection('courts'), (s) => setCourts(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
-    const unsubMatches = onSnapshot(doc(db, basePath).collection('matches'), (s) => setMatches(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
-    const unsubParticipants = onSnapshot(doc(db, basePath).collection('participants'), (s) => setParticipants(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
-    const unsubQueue = onSnapshot(doc(db, basePath).collection('queue'), (s) => setWaitingQueue(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
+    const unsubCourts = onSnapshot(collection(db, basePath, 'courts'), (s) => setCourts(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
+    const unsubMatches = onSnapshot(collection(db, basePath, 'matches'), (s) => setMatches(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
+    const unsubParticipants = onSnapshot(collection(db, basePath, 'participants'), (s) => setParticipants(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
+    const unsubQueue = onSnapshot(collection(db, basePath, 'queue'), (s) => setWaitingQueue(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
     const unsubMe = onSnapshot(doc(db, `${basePath}/participants/${clientId}`), s => setMe(s.exists() ? { id: s.id, ...s.data() } : null));
 
     return () => {
