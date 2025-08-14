@@ -12,14 +12,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Loader2 } from 'lucide-react';
+import PaymentCard from './PaymentCard';
 
 const registrationSchema = z.object({
   nickname: z.string().min(2, "Nickname must be at least 2 characters.").max(50, "Nickname cannot exceed 50 characters."),
   level: z.coerce.number().min(1, "Level must be between 1 and 7").max(7, "Level must be between 1 and 7"),
+  age: z.coerce.number().min(8, "You must be at least 8 years old.").max(99, "Age seems a bit high."),
 });
 
 export default function RegistrationForm({ orgId, venueId, sessionId }: { orgId: string, venueId: string, sessionId: string }) {
   const [loading, setLoading] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof registrationSchema>>({
@@ -27,6 +30,7 @@ export default function RegistrationForm({ orgId, venueId, sessionId }: { orgId:
     defaultValues: {
       nickname: "",
       level: 3,
+      age: 18,
     },
   });
   
@@ -38,6 +42,7 @@ export default function RegistrationForm({ orgId, venueId, sessionId }: { orgId:
         title: "Registration Successful!",
         description: "You're now registered. Please proceed to payment.",
       });
+      setShowPayment(true);
     } catch (error: any) {
       console.error(error);
       toast({
@@ -49,6 +54,10 @@ export default function RegistrationForm({ orgId, venueId, sessionId }: { orgId:
       setLoading(false);
     }
   };
+
+  if (showPayment) {
+    return <PaymentCard orgId={orgId} venueId={venueId} sessionId={sessionId} />;
+  }
 
   return (
     <Card className="max-w-lg mx-auto animate-in fade-in-50">
@@ -94,6 +103,20 @@ export default function RegistrationForm({ orgId, venueId, sessionId }: { orgId:
                     </SelectContent>
                   </Select>
                    <FormDescription>A rough estimate of your skill level from 1 (new) to 7 (highly competitive).</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="age"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Age</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="Your age" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} />
+                  </FormControl>
+                  <FormDescription>Your current age.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

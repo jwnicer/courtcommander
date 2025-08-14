@@ -37,6 +37,7 @@ export interface Participant {
   userId: string;
   nickname: string;
   level: number;
+  age: number;
   checkedIn: boolean;
   cooldown: number;
   lastMatchEndedAt: Timestamp | null;
