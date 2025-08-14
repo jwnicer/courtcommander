@@ -1,7 +1,8 @@
-"use client"
+
+'use client';
 
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, User } from 'firebase/auth';
+import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getFirestore } from 'firebase/firestore';
 
@@ -28,9 +29,21 @@ export const db = getFirestore(app);
 export const functions = getFunctions(app, 'us-central1'); // Specify region if not default
 
 // Auth helpers
-export const googleProvider = new GoogleAuthProvider();
-export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
-export const signOutUser = () => signOut(auth);
+export const signInAnonymouslyIfNeeded = () => {
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      if (user) {
+        resolve(user);
+      } else {
+        signInAnonymously(auth)
+          .then(userCredential => resolve(userCredential.user))
+          .catch(error => reject(error));
+      }
+    });
+  });
+};
+
 
 // Callable Functions as defined in the proposal
 export const api = {

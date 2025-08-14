@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import type { User } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { db, signInAnonymouslyIfNeeded } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import type { Participant } from '@/types';
 import RegistrationForm from './RegistrationForm';
@@ -10,7 +11,7 @@ import PaymentCard from './PaymentCard';
 import SessionDashboard from './SessionDashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Info } from 'lucide-react';
+import { Info, Loader2 } from 'lucide-react';
 
 interface SessionManagerProps {
   orgId: string;
@@ -24,47 +25,56 @@ export default function SessionManager({ orgId, venueId, sessionId }: SessionMan
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-      
-      if (currentUser) {
-        const participantRef = doc(db, `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}/participants/${currentUser.uid}`);
-        const unsubscribeParticipant = onSnapshot(participantRef, (docSnap) => {
-          if (docSnap.exists()) {
-            setParticipant({ id: docSnap.id, ...docSnap.data() } as Participant);
-          } else {
-            setParticipant(null);
-          }
-        }, (error) => {
-            console.error("Error fetching participant data:", error);
-            setParticipant(null);
-        });
-        
-        return () => unsubscribeParticipant();
-      } else {
-        setParticipant(null);
-      }
-    });
+    const manageSignIn = async () => {
+        try {
+            const currentUser = await signInAnonymouslyIfNeeded() as User;
+            setUser(currentUser);
+            
+            if (currentUser) {
+                const participantRef = doc(db, `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}/participants/${currentUser.uid}`);
+                const unsubscribeParticipant = onSnapshot(participantRef, (docSnap) => {
+                  if (docSnap.exists()) {
+                    setParticipant({ id: docSnap.id, ...docSnap.data() } as Participant);
+                  } else {
+                    setParticipant(null);
+                  }
+                  setLoading(false);
+                }, (error) => {
+                    console.error("Error fetching participant data:", error);
+                    setParticipant(null);
+                    setLoading(false);
+                });
+                
+                return () => unsubscribeParticipant();
+            } else {
+                setParticipant(null);
+                setLoading(false);
+            }
+        } catch(e) {
+            console.error("Anonymous sign-in failed", e);
+            setLoading(false);
+        }
+    };
 
-    return () => unsubscribeAuth();
+    const unsubscribe = manageSignIn();
+
+    return () => {
+      unsubscribe.then(unsub => unsub && unsub());
+    };
   }, [orgId, venueId, sessionId]);
 
   if (loading || participant === undefined) {
     return <SessionManagerSkeleton />;
   }
-
+  
   if (!user) {
     return (
       <Card className="max-w-md mx-auto mt-10 shadow-lg animate-in fade-in-50">
         <CardHeader className="text-center">
-          <Info className="mx-auto h-12 w-12 text-primary" />
-          <CardTitle className="mt-4">Welcome to Court Commander</CardTitle>
-          <CardDescription>Please sign in to join the session.</CardDescription>
+          <Loader2 className="mx-auto h-12 w-12 text-primary animate-spin" />
+          <CardTitle className="mt-4">Connecting...</CardTitle>
+          <CardDescription>Establishing a secure session...</CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-center text-sm text-muted-foreground">Sign in with your account to register, pay, and get on the court!</p>
-        </CardContent>
       </Card>
     );
   }
