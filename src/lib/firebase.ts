@@ -31,16 +31,17 @@ export const functions = getFunctions(app, 'us-central1'); // Specify region if 
 // Auth helpers
 export const signInAnonymouslyIfNeeded = () => {
   return new Promise((resolve, reject) => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const authInstance = getAuth(app);
+    const unsubscribe = onAuthStateChanged(authInstance, (user) => {
       unsubscribe();
       if (user) {
         resolve(user);
       } else {
-        signInAnonymously(auth)
+        signInAnonymously(authInstance)
           .then(userCredential => resolve(userCredential.user))
           .catch(error => reject(error));
       }
-    });
+    }, reject); // Added reject handler for onAuthStateChanged
   });
 };
 
