@@ -28,14 +28,14 @@ export default function SessionManager({ orgId, venueId, sessionId }: SessionMan
     const mockUser = getMockUser();
     setUser(mockUser);
     
-    // Simulate a registered but unpaid user to show the payment card directly.
+    // Simulate a registered AND paid user to show the dashboard directly.
     setParticipant({
       id: mockUser.uid,
       userId: mockUser.uid,
       nickname: 'MockPlayer',
       level: 4,
       age: 25,
-      paid: false,
+      paid: true, // This is now true to simulate payment confirmation
       checkedIn: false,
       cooldown: 0,
       lastMatchEndedAt: null,
