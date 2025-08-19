@@ -7,9 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, UserPlus, CreditCard, Clock, ListPlus, Swords, Repeat, ListX } from 'lucide-react';
+import { Loader2, UserPlus, CreditCard, Clock, ListPlus, Swords, Repeat, ListX, HelpCircle, CheckCircle } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { QUESTIONS, computeAssessment, AnswerMap, Letter } from '@/lib/badmintonSkillAssessment';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '../ui/scroll-area';
 
 type Step = 'register' | 'pay' | 'confirm' | 'queue' | 'in_match';
 
@@ -20,13 +25,69 @@ interface PlayerWizardProps {
     onComplete?: () => void;
 }
 
-const skillLevels = {
-    'A': 6,
-    'B': 5,
-    'C': 4,
-    'D': 3,
-    'E': 2,
-    'F': 1
+const skillLevels: Record<Letter, number> = {
+    'A': 6, 'B': 5, 'C': 4, 'D': 3, 'E': 2, 'F': 1
+};
+const reverseSkillLevels: Record<number, Letter> = {
+    6: 'A', 5: 'B', 4: 'C', 3: 'D', 2: 'E', 1: 'F'
+};
+
+const SkillAssessmentForm = ({ onComplete }: { onComplete: (level: Letter) => void }) => {
+    const [answers, setAnswers] = useState<AnswerMap>({});
+    const canSubmit = Object.keys(answers).length === QUESTIONS.length;
+
+    const handleAnswerChange = (questionId: string, value: Letter) => {
+        setAnswers(prev => ({ ...prev, [questionId]: value }));
+    };
+
+    const handleSubmit = () => {
+        const result = computeAssessment(answers);
+        onComplete(result.finalLevel);
+    };
+
+    return (
+        <DialogContent className="max-w-2xl">
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-2"><HelpCircle/> Skill Level Assessment</DialogTitle>
+                <DialogDescription>
+                    Answer these 10 questions to get an estimated skill level. Be honest for the best results.
+                </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="h-[60vh] pr-6">
+                <div className="space-y-6">
+                    {QUESTIONS.map((q, index) => (
+                        <Card key={q.id}>
+                            <CardHeader>
+                                <CardTitle className="text-lg">#{index + 1}: {q.topic}</CardTitle>
+                                <CardDescription>{q.prompt}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <RadioGroup onValueChange={(v: Letter) => handleAnswerChange(q.id, v)}>
+                                    <div className="space-y-2">
+                                    {Object.entries(q.options).map(([letter, description]) => (
+                                        <Label key={letter} className="flex items-start gap-3 p-3 rounded-md border has-[:checked]:bg-accent has-[:checked]:text-accent-foreground">
+                                            <RadioGroupItem value={letter} id={`${q.id}-${letter}`} className="mt-1" />
+                                            <div className="grid gap-1.5 leading-normal">
+                                                <span className="font-semibold">Level {letter}</span>
+                                                <span className="text-sm font-normal">{description}</span>
+                                            </div>
+                                        </Label>
+                                    ))}
+                                    </div>
+                                </RadioGroup>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </ScrollArea>
+            <DialogFooter>
+                <Button onClick={handleSubmit} disabled={!canSubmit}>
+                    <CheckCircle className="mr-2" />
+                    Calculate My Level
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    );
 };
 
 
@@ -43,6 +104,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   const [age, setAge] = useState(18);
   const [refCode, setRef] = useState('');
   const [loading, setLoading] = useState(false);
+  const [assessmentOpen, setAssessmentOpen] = useState(false);
   
   const base = `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}`;
 
@@ -115,141 +177,154 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   const leaveQueue = () => handleAction(() => createIntent(base, 'leave_queue', clientId!, {}));
   const requeue = () => handleAction(() => createIntent(base, 'requeue_after_match', clientId!, {}));
 
+  const handleAssessmentComplete = (calculatedLevel: Letter) => {
+    setLevel(skillLevels[calculatedLevel]);
+    setAssessmentOpen(false);
+  };
+
   if (!clientId) {
     return <Card className="w-full border-none shadow-none"><CardHeader><CardTitle>Loading...</CardTitle></CardHeader></Card>
   }
   
   return (
-    <Card className="w-full border-none shadow-none rounded-none">
-      {step === 'register' && (
-        <>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><UserPlus /> Register for Session</CardTitle>
-            <CardDescription>Enter your details to join the open play session.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-                <label className="text-sm font-medium">Nickname</label>
-                <Input placeholder="e.g., ShuttleSmasher" value={nickname} onChange={e => setNick(e.target.value)} />
-            </div>
-            <div>
-                <label className="text-sm font-medium">Skill Level</label>
-                <Select onValueChange={(v) => setLevel(Number(v))} defaultValue={String(level)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                        {Object.entries(skillLevels).map(([grade, value]) => 
-                            <SelectItem key={grade} value={String(value)}>Level {grade}</SelectItem>
-                        )}
-                    </SelectContent>
-                </Select>
-            </div>
-            <div>
-                <label className="text-sm font-medium">Age</label>
-                <Input type="number" min={8} max={99} value={age} onChange={e => setAge(Number(e.target.value))} />
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full" onClick={doRegister} disabled={loading || !nickname}>
-                {loading ? <Loader2 className="animate-spin" /> : <UserPlus />} Save & Continue
-            </Button>
-          </CardFooter>
-        </>
-      )}
-
-      {step === 'pay' && (
-         <>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><CreditCard /> Complete Your Payment</CardTitle>
-            <CardDescription>Use the details below to pay, then enter the reference number.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!cfg ? <Loader2 className="mx-auto animate-spin" /> : (
-                <>
-                    <Alert>
-                        <AlertTitle>Payment Details</AlertTitle>
-                        <AlertDescription className="space-y-2">
-                           <p>Pay <span className="font-semibold">${((cfg.amountCents || 0) / 100).toFixed(2)}</span> via {cfg.accountLabel}</p>
-                            <div className="flex items-center gap-2">
-                                <code className="px-2 py-1 bg-background rounded-md text-primary font-mono">{cfg.accountNumber}</code>
-                                <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(cfg.accountNumber)}>Copy</Button>
-                            </div>
-                            {cfg.qrUrl && <img src={cfg.qrUrl} data-ai-hint="qr code" className="rounded-lg shadow-sm mx-auto max-w-[200px]" alt="Payment QR Code" />}
-                        </AlertDescription>
-                    </Alert>
-                    
-                    <div>
-                        <label className="text-sm font-medium mt-4 block">Payment Reference #</label>
-                        <Input placeholder="e.g., transaction ID" value={refCode} onChange={e => setRef(e.target.value)} />
+    <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
+        <Card className="w-full border-none shadow-none rounded-none">
+        {step === 'register' && (
+            <>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><UserPlus /> Register for Session</CardTitle>
+                <CardDescription>Enter your details to join the open play session.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div>
+                    <label className="text-sm font-medium">Nickname</label>
+                    <Input placeholder="e.g., ShuttleSmasher" value={nickname} onChange={e => setNick(e.target.value)} />
+                </div>
+                <div>
+                    <div className="flex justify-between items-center mb-1">
+                        <label className="text-sm font-medium">Skill Level</label>
+                        <DialogTrigger asChild>
+                             <Button variant="link" size="sm" className="p-0 h-auto">Don't know your level? Take a test.</Button>
+                        </DialogTrigger>
                     </div>
-                </>
-            )}
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full" onClick={submitPayment} disabled={loading || !refCode || !cfg}>
-                {loading ? <Loader2 className="animate-spin" /> : <CreditCard />} I Paid – Submit for Confirmation
-            </Button>
-          </CardFooter>
-        </>
-      )}
-
-      {step === 'confirm' && (
-        <>
-            <CardHeader>
-                <CardTitle>Waiting for Confirmation</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
-                <Clock className="h-12 w-12 text-primary mx-auto mb-4" />
-                <h2 className="text-xl font-semibold">Confirmation Pending</h2>
-                <p className="text-muted-foreground">A coach will approve your payment of <span className='font-semibold'>${((cfg?.amountCents || 0) / 100).toFixed(2)}</span> shortly.</p>
-                <p className="text-sm mt-2">Your reference: <code className='font-mono bg-muted px-1 py-0.5 rounded'>{me.paymentRef}</code></p>
+                    <Select onValueChange={(v) => setLevel(Number(v))} value={String(level)}>
+                        <SelectTrigger><SelectValue placeholder="Select your skill level" /></SelectTrigger>
+                        <SelectContent>
+                            {Object.entries(skillLevels).map(([grade, value]) => 
+                                <SelectItem key={grade} value={String(value)}>Level {grade}</SelectItem>
+                            )}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <label className="text-sm font-medium">Age</label>
+                    <Input type="number" min={8} max={99} value={age} onChange={e => setAge(Number(e.target.value))} />
+                </div>
             </CardContent>
-        </>
-      )}
-
-      {step === 'queue' && (
-        <>
-            <CardHeader>
-                <CardTitle>You're All Set!</CardTitle>
-                <CardDescription>You are paid and ready to play.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!queueEntry ? (
-                <Button className="w-full" onClick={joinQueue} disabled={loading}>
-                    {loading ? <Loader2 className="animate-spin" /> : <ListPlus />}
-                    Join Queue
+            <CardFooter>
+                <Button className="w-full" onClick={doRegister} disabled={loading || !nickname}>
+                    {loading ? <Loader2 className="animate-spin" /> : <UserPlus />} Save & Continue
                 </Button>
-              ) : (
-                <Alert variant={queueEntry.status === 'waiting' ? 'default' : 'destructive'}>
-                    <AlertTitle>You're in the Queue!</AlertTitle>
-                    <AlertDescription>Your position will be updated automatically. You'll be notified when your match starts.</AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-            {queueEntry?.status === 'waiting' && (
-              <CardFooter>
-                  <Button variant="destructive" className="w-full" onClick={leaveQueue} disabled={loading}>
-                      {loading ? <Loader2 className="animate-spin" /> : <ListX />} Leave Queue
-                  </Button>
-              </CardFooter>
-            )}
-        </>
-      )}
-      
-      {step === 'in_match' && (
-        <>
+            </CardFooter>
+            </>
+        )}
+
+        {step === 'pay' && (
+            <>
             <CardHeader>
-                <CardTitle>Match in Progress</CardTitle>
+                <CardTitle className="flex items-center gap-2"><CreditCard /> Complete Your Payment</CardTitle>
+                <CardDescription>Use the details below to pay, then enter the reference number.</CardDescription>
             </CardHeader>
-            <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
-                <Swords className="h-12 w-12 text-destructive mx-auto mb-4" />
-                <h2 className="text-xl font-semibold">Good Luck!</h2>
-                <p className="text-muted-foreground">Once your game is finished, tap the button below.</p>
-                <Button className="w-full mt-6" onClick={requeue} disabled={loading}>
-                    {loading ? <Loader2 className="animate-spin" /> : <Repeat />} Match Over – Rejoin Queue
-                </Button>
+            <CardContent className="space-y-4">
+                {!cfg ? <Loader2 className="mx-auto animate-spin" /> : (
+                    <>
+                        <Alert>
+                            <AlertTitle>Payment Details</AlertTitle>
+                            <AlertDescription className="space-y-2">
+                            <p>Pay <span className="font-semibold">${((cfg.amountCents || 0) / 100).toFixed(2)}</span> via {cfg.accountLabel}</p>
+                                <div className="flex items-center gap-2">
+                                    <code className="px-2 py-1 bg-background rounded-md text-primary font-mono">{cfg.accountNumber}</code>
+                                    <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(cfg.accountNumber)}>Copy</Button>
+                                </div>
+                                {cfg.qrUrl && <img src={cfg.qrUrl} data-ai-hint="qr code" className="rounded-lg shadow-sm mx-auto max-w-[200px]" alt="Payment QR Code" />}
+                            </AlertDescription>
+                        </Alert>
+                        
+                        <div>
+                            <label className="text-sm font-medium mt-4 block">Payment Reference #</label>
+                            <Input placeholder="e.g., transaction ID" value={refCode} onChange={e => setRef(e.target.value)} />
+                        </div>
+                    </>
+                )}
             </CardContent>
-        </>
-      )}
-    </Card>
+            <CardFooter>
+                <Button className="w-full" onClick={submitPayment} disabled={loading || !refCode || !cfg}>
+                    {loading ? <Loader2 className="animate-spin" /> : <CreditCard />} I Paid – Submit for Confirmation
+                </Button>
+            </CardFooter>
+            </>
+        )}
+
+        {step === 'confirm' && (
+            <>
+                <CardHeader>
+                    <CardTitle>Waiting for Confirmation</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
+                    <Clock className="h-12 w-12 text-primary mx-auto mb-4" />
+                    <h2 className="text-xl font-semibold">Confirmation Pending</h2>
+                    <p className="text-muted-foreground">A coach will approve your payment of <span className='font-semibold'>${((cfg?.amountCents || 0) / 100).toFixed(2)}</span> shortly.</p>
+                    <p className="text-sm mt-2">Your reference: <code className='font-mono bg-muted px-1 py-0.5 rounded'>{me.paymentRef}</code></p>
+                </CardContent>
+            </>
+        )}
+
+        {step === 'queue' && (
+            <>
+                <CardHeader>
+                    <CardTitle>You're All Set!</CardTitle>
+                    <CardDescription>You are paid and ready to play.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                {!queueEntry ? (
+                    <Button className="w-full" onClick={joinQueue} disabled={loading}>
+                        {loading ? <Loader2 className="animate-spin" /> : <ListPlus />}
+                        Join Queue
+                    </Button>
+                ) : (
+                    <Alert variant={queueEntry.status === 'waiting' ? 'default' : 'destructive'}>
+                        <AlertTitle>You're in the Queue!</AlertTitle>
+                        <AlertDescription>Your position will be updated automatically. You'll be notified when your match starts.</AlertDescription>
+                    </Alert>
+                )}
+                </CardContent>
+                {queueEntry?.status === 'waiting' && (
+                <CardFooter>
+                    <Button variant="destructive" className="w-full" onClick={leaveQueue} disabled={loading}>
+                        {loading ? <Loader2 className="animate-spin" /> : <ListX />} Leave Queue
+                    </Button>
+                </CardFooter>
+                )}
+            </>
+        )}
+        
+        {step === 'in_match' && (
+            <>
+                <CardHeader>
+                    <CardTitle>Match in Progress</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
+                    <Swords className="h-12 w-12 text-destructive mx-auto mb-4" />
+                    <h2 className="text-xl font-semibold">Good Luck!</h2>
+                    <p className="text-muted-foreground">Once your game is finished, tap the button below.</p>
+                    <Button className="w-full mt-6" onClick={requeue} disabled={loading}>
+                        {loading ? <Loader2 className="animate-spin" /> : <Repeat />} Match Over – Rejoin Queue
+                    </Button>
+                </CardContent>
+            </>
+        )}
+        </Card>
+        <SkillAssessmentForm onComplete={handleAssessmentComplete} />
+    </Dialog>
   );
 }
