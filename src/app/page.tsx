@@ -1,120 +1,127 @@
 
-'use client';
-import { Header } from "@/components/layout/Header";
-import { useEffect, useState } from 'react';
-import { onSnapshot, doc, collection } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { getClientId } from '@/lib/clientId';
-import LiveView from "@/components/session/LiveView";
-import AdminPanel from "@/components/session/AdminPanel";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Shield } from "lucide-react";
-import MatchSuggester from "@/components/ai/MatchSuggester";
-import PlayerWizard from "@/components/session/PlayerWizard";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { UserPlus } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowRight, Bot, CalendarClock, Trophy } from 'lucide-react';
+import Link from 'next/link';
 
+const BadmintonIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-10 w-10 text-primary"
+    data-ai-hint="badminton shuttlecock"
+  >
+    <path d="m15.18 2-6.25 6.25" />
+    <path d="M12.53 3.47 5.28 10.72" />
+    <path d="M10.72 5.28 3.47 12.53" />
+    <path d="M9.75 6.25 2 14" />
+    <path d="M14 22 8.5 16.5" />
+    <path d="m20.5 17.5-5-5" />
+    <path d="m17.5 20.5-5-5" />
+    <path d="M14.5 21.5-9 7" />
+  </svg>
+);
 
-export default function PlayPage() {
-  const orgId = "org_abc";
-  const venueId = "downtown_gym";
-  const sessionId = "session_20250820";
-  const basePath = `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}`;
-  const clientId = getClientId();
-
-  const [session, setSession] = useState(null);
-  const [courts, setCourts] = useState([]);
-  const [matches, setMatches] = useState([]);
-  const [participants, setParticipants] = useState([]);
-  const [waitingQueue, setWaitingQueue] = useState([]);
-  const [me, setMe] = useState<any>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  const canCoach = me?.roles?.includes('coach');
-  const isAdmin = me?.roles?.includes('admin');
-  const gameType = session?.gameType || 'doubles';
-  const myLevel = me?.level || 3;
-
-  useEffect(() => {
-    const unsubSession = onSnapshot(doc(db, basePath), (s) => setSession(s.data() as any));
-    const unsubCourts = onSnapshot(collection(db, `${basePath}/courts`), (s) => setCourts(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
-    const unsubMatches = onSnapshot(collection(db, `${basePath}/matches`), (s) => setMatches(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
-    const unsubParticipants = onSnapshot(collection(db, `${basePath}/participants`), (s) => setParticipants(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
-    const unsubQueue = onSnapshot(collection(db, `${basePath}/queue`), (s) => setWaitingQueue(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
-    const unsubMe = onSnapshot(doc(db, `${basePath}/participants/${clientId}`), s => setMe(s.exists() ? { id: s.id, ...s.data() } : null));
-
-    return () => {
-      unsubSession();
-      unsubCourts();
-      unsubMatches();
-      unsubParticipants();
-      unsubQueue();
-      unsubMe();
-    };
-  }, [basePath, clientId]);
-
-  useEffect(() => {
-    // If user is not registered, open the dialog
-    if (participants.length > 0 && !me) {
-      setDialogOpen(true);
-    }
-  }, [me, participants]);
-
+export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <Header>
-            <DialogTrigger asChild>
-                <Button>
-                    <UserPlus />
-                    Join Session
-                </Button>
-            </DialogTrigger>
-        </Header>
-        <main className="flex-grow container mx-auto p-4 md:p-8">
-            <Tabs defaultValue="player" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="player"><User className="mr-2"/>Player View</TabsTrigger>
-                <TabsTrigger value="admin" disabled={!isAdmin}><Shield className="mr-2"/>Admin View</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="player">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1">
-                    <MatchSuggester 
-                        playerLevel={myLevel} 
-                        availablePlayers={waitingQueue}
-                        gameType={gameType}
-                    />
-                </div>
-                <div className="lg:col-span-2">
-                    <LiveView
-                        basePath={basePath}
-                        canCoach={canCoach}
-                        courts={courts}
-                        matches={matches}
-                        participants={participants}
-                        waitingQueue={waitingQueue}
-                        gameType={gameType}
-                    />
-                </div>
-                </div>
-            </TabsContent>
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-20 max-w-screen-2xl items-center justify-between">
+          <div className="flex items-center gap-3">
+            <BadmintonIcon />
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Court<span className="text-primary">Commander</span>
+            </h1>
+          </div>
+          <Button asChild size="lg" className="px-6 py-3 text-lg font-medium rounded-full">
+            <Link href="/play">
+              Join the Queue <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </header>
 
-            <TabsContent value="admin">
-                <AdminPanel 
-                session={session}
-                participants={participants}
-                courts={courts}
-                />
-            </TabsContent>
-            </Tabs>
-        </main>
-        <DialogContent className="p-0">
-            <PlayerWizard orgId={orgId} venueId={venueId} sessionId={sessionId} onComplete={() => setDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
+      <main className="flex-grow">
+        <section className="relative overflow-hidden py-24 md:py-32">
+          <div className="container mx-auto text-center">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4">
+              The Ultimate Badminton
+            </h1>
+            <h2 className="text-5xl md:text-7xl font-extrabold text-primary mb-8">
+              Open Play Manager
+            </h2>
+            <p className="max-w-2xl text-lg md:text-xl text-muted-foreground mb-10 mx-auto">
+              Stop the wait, start the rally. Our AI-powered system creates balanced matches, manages court queues, and maximizes playtime for everyone.
+            </p>
+            <Button asChild size="lg" className="shadow-lg shadow-primary/30">
+              <Link href="/play">
+                Join the Queue <ArrowRight className="ml-2" />
+              </Link>
+            </Button>
+          </div>
+        </section>
+
+        <section className="bg-muted/50 py-20">
+          <div className="container mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold tracking-tight">Why You'll Love CourtCommander</h2>
+              <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">From fair matchmaking to seamless organization, we've got your session covered.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <Card className="text-center border-2 border-transparent bg-background hover:border-primary hover:shadow-lg transition-all duration-300">
+                <CardHeader>
+                  <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-2">
+                    <Bot className="h-8 w-8 text-primary" />
+                  </div>
+                  <CardTitle className="font-medium">AI-Powered Matchmaking</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Our intelligent system analyzes player skill levels to suggest the most balanced and competitive games, ensuring everyone has a great time.</p>
+                </CardContent>
+              </Card>
+              <Card className="text-center border-2 border-transparent bg-background hover:border-primary hover:shadow-lg transition-all duration-300">
+                <CardHeader>
+                  <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-2">
+                    <CalendarClock className="h-8 w-8 text-primary" />
+                  </div>
+                  <CardTitle className="font-medium">Automated Queue & Courts</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">A fair, transparent queue that automatically assigns players to the next available court. Less waiting, more playing.</p>
+                </CardContent>
+              </Card>
+              <Card className="text-center border-2 border-transparent bg-background hover:border-primary hover:shadow-lg transition-all duration-300">
+                <CardHeader>
+                  <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-2">
+                    <Trophy className="h-8 w-8 text-primary" />
+                  </div>
+                  <CardTitle className="font-medium">Live Session Dashboard</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">See real-time court status, who's playing, and who's next in line from any device. Stay informed and ready for your next match.</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="py-8 border-t bg-muted/50">
+        <div className="container mx-auto text-center text-muted-foreground">
+          <div className="flex justify-center items-center gap-2 mb-2">
+            <BadmintonIcon />
+            <p className="font-semibold text-foreground">CourtCommander</p>
+          </div>
+          <p className="text-sm">&copy; {new Date().getFullYear()} - The smartest way to play.</p>
+        </div>
+      </footer>
     </div>
   );
 }
