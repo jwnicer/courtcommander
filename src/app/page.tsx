@@ -1,7 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Bot, Gamepad2, Users } from 'lucide-react';
+import { ArrowRight, Bot, Users, Gamepad2 } from 'lucide-react';
 import Link from 'next/link';
 
 const BadmintonIcon = () => (
