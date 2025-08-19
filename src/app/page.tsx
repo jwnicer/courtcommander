@@ -120,6 +120,11 @@ export default function LandingPage() {
             <p className="font-semibold text-foreground">CourtCommander</p>
           </div>
           <p className="text-sm">&copy; {new Date().getFullYear()} - The smartest way to play.</p>
+          <div className="mt-4 text-sm">
+            <Link href="/terms" className="text-primary hover:underline">
+                Terms & Conditions
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
