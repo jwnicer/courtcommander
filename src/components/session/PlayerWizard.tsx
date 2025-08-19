@@ -20,6 +20,16 @@ interface PlayerWizardProps {
     onComplete?: () => void;
 }
 
+const skillLevels = {
+    'A': 6,
+    'B': 5,
+    'C': 4,
+    'D': 3,
+    'E': 2,
+    'F': 1
+};
+
+
 export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: PlayerWizardProps) {
   const [clientId, setClientId] = useState<string | null>(null);
 
@@ -123,10 +133,14 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
                 <Input placeholder="e.g., ShuttleSmasher" value={nickname} onChange={e => setNick(e.target.value)} />
             </div>
             <div>
-                <label className="text-sm font-medium">Skill Level (1-7)</label>
+                <label className="text-sm font-medium">Skill Level</label>
                 <Select onValueChange={(v) => setLevel(Number(v))} defaultValue={String(level)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{[...Array(7)].map((_,i) => <SelectItem key={i+1} value={String(i+1)}>Level {i+1}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                        {Object.entries(skillLevels).map(([grade, value]) => 
+                            <SelectItem key={grade} value={String(value)}>Level {grade}</SelectItem>
+                        )}
+                    </SelectContent>
                 </Select>
             </div>
             <div>
