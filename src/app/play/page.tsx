@@ -1,7 +1,7 @@
 
 'use client';
 import { Header } from "@/components/layout/Header";
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { onSnapshot, doc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getClientId } from '@/lib/clientId';
@@ -14,9 +14,10 @@ import PlayerWizard from "@/components/session/PlayerWizard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { UserPlus } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 
-export default function PlayPage() {
+function PlayPageContent() {
   const orgId = "org_abc";
   const venueId = "downtown_gym";
   const sessionId = "session_20250820";
@@ -30,6 +31,7 @@ export default function PlayPage() {
   const [waitingQueue, setWaitingQueue] = useState([]);
   const [me, setMe] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const searchParams = useSearchParams();
 
   const canCoach = me?.roles?.includes('coach');
   const isAdmin = me?.roles?.includes('admin');
@@ -55,11 +57,15 @@ export default function PlayPage() {
   }, [basePath, clientId]);
 
   useEffect(() => {
+    const action = searchParams.get('action');
     // If user is not registered, open the dialog
     if (participants.length > 0 && !me) {
       setDialogOpen(true);
     }
-  }, [me, participants]);
+    if (action === 'join' && !me) {
+      setDialogOpen(true);
+    }
+  }, [me, participants, searchParams]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -119,5 +125,13 @@ export default function PlayPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function PlayPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PlayPageContent />
+    </Suspense>
   );
 }

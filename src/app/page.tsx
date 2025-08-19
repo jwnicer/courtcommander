@@ -41,7 +41,7 @@ export default function LandingPage() {
             </h1>
           </div>
           <Button asChild size="lg" className="px-6 py-3 text-lg font-medium rounded-full">
-            <Link href="/play">
+            <Link href="/play?action=join">
               Join the Queue <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -61,7 +61,7 @@ export default function LandingPage() {
               Stop the wait, start the rally. Our AI-powered system creates balanced matches, manages court queues, and maximizes playtime for everyone.
             </p>
             <Button asChild size="lg" className="shadow-lg shadow-primary/30">
-              <Link href="/play">
+              <Link href="/play?action=join">
                 Join the Queue <ArrowRight className="ml-2" />
               </Link>
             </Button>
