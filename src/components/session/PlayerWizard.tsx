@@ -359,13 +359,13 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
         )}
         </Card>
         
-        <TermsAndConditionsDialog onAgree={doRegisterAndQueue} />
+        <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
+          <TermsAndConditionsDialog onAgree={doRegisterAndQueue} />
+        </Dialog>
         
-        <DialogTrigger asChild>
-          <button className="hidden">Open T&C</button>
-        </DialogTrigger>
-
-        <SkillAssessmentForm onComplete={handleAssessmentComplete} />
+        <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
+          <SkillAssessmentForm onComplete={handleAssessmentComplete} />
+        </Dialog>
       
       </Dialog>
     </Dialog>
