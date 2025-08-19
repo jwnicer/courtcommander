@@ -58,7 +58,7 @@ export default function LandingPage() {
           </p>
           <Button asChild size="lg">
             <Link href="/play">
-              Enter Live Session <ArrowRight className="ml-2" />
+              Join the Queue <ArrowRight className="ml-2" />
             </Link>
           </Button>
         </section>
