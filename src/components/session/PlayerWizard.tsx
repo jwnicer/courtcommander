@@ -1,3 +1,4 @@
+
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
@@ -186,16 +187,30 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     return <Card className="w-full border-none shadow-none"><CardHeader><CardTitle>Loading...</CardTitle></CardHeader></Card>
   }
   
+  const renderHeader = () => {
+    switch (step) {
+      case 'register':
+        return <DialogHeader><DialogTitle className="flex items-center gap-2"><UserPlus /> Register for Session</DialogTitle><DialogDescription>Enter your details to join the open play session.</DialogDescription></DialogHeader>;
+      case 'pay':
+        return <DialogHeader><DialogTitle className="flex items-center gap-2"><CreditCard /> Complete Your Payment</DialogTitle><DialogDescription>Use the details below to pay, then enter the reference number.</DialogDescription></DialogHeader>;
+      case 'confirm':
+        return <DialogHeader><DialogTitle>Waiting for Confirmation</DialogTitle></DialogHeader>;
+      case 'queue':
+        return <DialogHeader><DialogTitle>You're All Set!</DialogTitle><DialogDescription>You are paid and ready to play.</DialogDescription></DialogHeader>;
+      case 'in_match':
+        return <DialogHeader><DialogTitle>Match in Progress</DialogTitle></DialogHeader>;
+      default:
+        return null;
+    }
+  };
+
   return (
     <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
         <Card className="w-full border-none shadow-none rounded-none">
+        {renderHeader()}
         {step === 'register' && (
             <>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><UserPlus /> Register for Session</CardTitle>
-                <CardDescription>Enter your details to join the open play session.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-6">
                 <div>
                     <label className="text-sm font-medium">Nickname</label>
                     <Input placeholder="e.g., ShuttleSmasher" value={nickname} onChange={e => setNick(e.target.value)} />
@@ -231,11 +246,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
         {step === 'pay' && (
             <>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><CreditCard /> Complete Your Payment</CardTitle>
-                <CardDescription>Use the details below to pay, then enter the reference number.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-6">
                 {!cfg ? <Loader2 className="mx-auto animate-spin" /> : (
                     <>
                         <Alert>
@@ -267,9 +278,6 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
         {step === 'confirm' && (
             <>
-                <CardHeader>
-                    <CardTitle>Waiting for Confirmation</CardTitle>
-                </CardHeader>
                 <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
                     <Clock className="h-12 w-12 text-primary mx-auto mb-4" />
                     <h2 className="text-xl font-semibold">Confirmation Pending</h2>
@@ -281,10 +289,6 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
         {step === 'queue' && (
             <>
-                <CardHeader>
-                    <CardTitle>You're All Set!</CardTitle>
-                    <CardDescription>You are paid and ready to play.</CardDescription>
-                </CardHeader>
                 <CardContent>
                 {!queueEntry ? (
                     <Button className="w-full" onClick={joinQueue} disabled={loading}>
@@ -310,9 +314,6 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
         
         {step === 'in_match' && (
             <>
-                <CardHeader>
-                    <CardTitle>Match in Progress</CardTitle>
-                </CardHeader>
                 <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
                     <Swords className="h-12 w-12 text-destructive mx-auto mb-4" />
                     <h2 className="text-xl font-semibold">Good Luck!</h2>
@@ -328,3 +329,5 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     </Dialog>
   );
 }
+
+    
