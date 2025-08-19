@@ -148,11 +148,11 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
   const step: Step = useMemo(() => {
     if (!me) return 'register';
-    if (!me.paid) return me.paymentRef ? 'confirm' : 'pay';
+    if (cfg?.amountCents > 0 && !me.paid) return me.paymentRef ? 'confirm' : 'pay';
     if (queueEntry?.status === 'playing') return 'in_match';
     // Any other paid state falls into the queueing logic.
     return 'queue';
-  }, [me, queueEntry]);
+  }, [me, queueEntry, cfg]);
 
   useEffect(() => {
     if (step === 'queue' || step === 'in_match') {
@@ -172,7 +172,12 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     }
   };
 
-  const doRegister = () => handleAction(() => createIntent(base, 'register', clientId!, { nickname, level, age }));
+  const doRegisterAndQueue = () => handleAction(async () => {
+    await createIntent(base, 'register', clientId!, { nickname, level, age });
+    // After registration, immediately enqueue the player
+    await createIntent(base, 'enqueue', clientId!, {});
+  });
+
   const submitPayment = () => handleAction(() => createIntent(base, 'submit_payment', clientId!, { refCode, amountCents: cfg?.amountCents, currency: cfg?.currency }));
   const joinQueue = () => handleAction(() => createIntent(base, 'enqueue', clientId!, {}));
   const leaveQueue = () => handleAction(() => createIntent(base, 'leave_queue', clientId!, {}));
@@ -240,7 +245,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
                 </div>
             </CardContent>
             <CardFooter>
-                <Button className="w-full" onClick={doRegister} disabled={loading || !nickname}>
+                <Button className="w-full" onClick={doRegisterAndQueue} disabled={loading || !nickname}>
                     {loading ? <Loader2 className="animate-spin" /> : <UserPlus />} Save & Continue
                 </Button>
             </CardFooter>
