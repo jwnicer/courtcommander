@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, UserPlus, CreditCard, Clock, ListPlus, Swords, Repeat, ListX, HelpCircle, CheckCircle } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { QUESTIONS, computeAssessment, AnswerMap, Letter } from '@/lib/badmintonSkillAssessment';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -206,11 +206,14 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
   return (
     <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
-        <Card className="w-full border-none shadow-none rounded-none">
-        {renderHeader()}
+        <Card className="w-full border-none shadow-none rounded-t-lg">
+          <div className="p-6">
+            {renderHeader()}
+          </div>
+        
         {step === 'register' && (
             <>
-            <CardContent className="space-y-4 pt-6">
+            <CardContent className="space-y-4 pt-0">
                 <div>
                     <label className="text-sm font-medium">Nickname</label>
                     <Input placeholder="e.g., ShuttleSmasher" value={nickname} onChange={e => setNick(e.target.value)} />
@@ -246,7 +249,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
         {step === 'pay' && (
             <>
-            <CardContent className="space-y-4 pt-6">
+            <CardContent className="space-y-4 pt-0">
                 {!cfg ? <Loader2 className="mx-auto animate-spin" /> : (
                     <>
                         <Alert>
@@ -289,7 +292,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
         {step === 'queue' && (
             <>
-                <CardContent>
+                <CardContent className="pt-0">
                 {!queueEntry ? (
                     <Button className="w-full" onClick={joinQueue} disabled={loading}>
                         {loading ? <Loader2 className="animate-spin" /> : <ListPlus />}
@@ -329,5 +332,3 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     </Dialog>
   );
 }
-
-    

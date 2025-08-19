@@ -12,7 +12,7 @@ import { User, Shield } from "lucide-react";
 import MatchSuggester from "@/components/ai/MatchSuggester";
 import PlayerWizard from "@/components/session/PlayerWizard";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { UserPlus } from "lucide-react";
 
 
@@ -56,10 +56,10 @@ export default function PlayPage() {
 
   useEffect(() => {
     // If user is not registered, open the dialog
-    if (!me) {
+    if (participants.length > 0 && !me) {
       setDialogOpen(true);
     }
-  }, [me]);
+  }, [me, participants]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -112,7 +112,7 @@ export default function PlayPage() {
             </Tabs>
         </main>
         <DialogContent className="p-0">
-             <PlayerWizard orgId={orgId} venueId={venueId} sessionId={sessionId} onComplete={() => setDialogOpen(false)} />
+            <PlayerWizard orgId={orgId} venueId={venueId} sessionId={sessionId} onComplete={() => setDialogOpen(false)} />
         </DialogContent>
       </Dialog>
     </div>
