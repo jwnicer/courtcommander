@@ -8,16 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, UserPlus, CreditCard, Clock, ListPlus, Swords, Repeat, ListX, HelpCircle, CheckCircle } from 'lucide-react';
-import { Badge } from '../ui/badge';
+import { Loader2, UserPlus, CreditCard, Clock, ListPlus, Swords, Repeat, ListX, HelpCircle, CheckCircle, FileText } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { QUESTIONS, computeAssessment, AnswerMap, Letter } from '@/lib/badmintonSkillAssessment';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '../ui/scroll-area';
+import Link from 'next/link';
 
-type Step = 'register' | 'pay' | 'confirm' | 'queue' | 'in_match';
+type Step = 'register' | 'terms' | 'pay' | 'confirm' | 'queue' | 'in_match';
 
 interface PlayerWizardProps {
     orgId: string;
@@ -91,6 +91,31 @@ const SkillAssessmentForm = ({ onComplete }: { onComplete: (level: Letter) => vo
     );
 };
 
+const TermsAndConditionsDialog = ({ onAgree }: { onAgree: () => void }) => {
+    return (
+        <DialogContent className="max-w-3xl">
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-2"><FileText /> Terms & Conditions</DialogTitle>
+                <DialogDescription>Please read and agree to the terms before participating.</DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="h-[60vh] pr-6">
+                 <div className="prose prose-stone dark:prose-invert max-w-none space-y-4 text-sm">
+                    <p>By clicking "I Agree," you acknowledge you have read, understood, and agree to the full <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms & Conditions</Link>, including the following key points:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                        <li><strong>Assumption of Risk:</strong> You voluntarily assume all risks associated with badminton, including injury.</li>
+                        <li><strong>Release of Liability:</strong> You release CourtCommander and its affiliates from any claims arising from your participation.</li>
+                        <li><strong>Code of Conduct:</strong> You agree to maintain a respectful and safe environment, with zero tolerance for profanity or harassment.</li>
+                        <li><strong>QM Authority:</strong> You agree that the Queue Master (QM) has final authority on all session-related matters.</li>
+                    </ul>
+                    <p>For the complete details, please review the <Link href="/terms" target="_blank" className="text-primary hover:underline">full Terms & Conditions page</Link>.</p>
+                </div>
+            </ScrollArea>
+            <DialogFooter>
+                <Button onClick={onAgree}><CheckCircle className="mr-2"/> I Agree</Button>
+            </DialogFooter>
+        </DialogContent>
+    )
+}
 
 export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: PlayerWizardProps) {
   const [clientId, setClientId] = useState<string | null>(null);
@@ -103,14 +128,13 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   const [nickname, setNick] = useState('');
   const [level, setLevel] = useState(3);
   const [age, setAge] = useState(18);
-  const [refCode, setRef] = useState('');
   const [loading, setLoading] = useState(false);
   const [assessmentOpen, setAssessmentOpen] = useState(false);
-  
+  const [termsOpen, setTermsOpen] = useState(false);
+
   const base = `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}`;
 
   useEffect(() => {
-    // getClientId is sync and uses localStorage, so it's safe to call here.
     setClientId(getClientId());
   }, []);
 
@@ -148,9 +172,9 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
   const step: Step = useMemo(() => {
     if (!me) return 'register';
+    if (!me.agreedToTerms) return 'terms';
     if (cfg?.amountCents > 0 && !me.paid) return me.paymentRef ? 'confirm' : 'pay';
     if (queueEntry?.status === 'playing') return 'in_match';
-    // Any other paid state falls into the queueing logic.
     return 'queue';
   }, [me, queueEntry, cfg]);
 
@@ -166,19 +190,22 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
       await action();
     } catch (e: any) {
       console.error("Action failed", e);
-      // Optionally, add a toast notification for the user
     } finally {
       setLoading(false);
     }
   };
 
+  const handleRegistrationSubmit = () => {
+      setTermsOpen(true);
+  }
+
   const doRegisterAndQueue = () => handleAction(async () => {
-    await createIntent(base, 'register', clientId!, { nickname, level, age });
-    // After registration, immediately enqueue the player
+    await createIntent(base, 'register', clientId!, { nickname, level, age, agreedToTerms: true, paid: true });
     await createIntent(base, 'enqueue', clientId!, {});
+    setTermsOpen(false);
   });
 
-  const submitPayment = () => handleAction(() => createIntent(base, 'submit_payment', clientId!, { refCode, amountCents: cfg?.amountCents, currency: cfg?.currency }));
+  const submitPayment = () => handleAction(() => createIntent(base, 'submit_payment', clientId!, { amountCents: cfg?.amountCents, currency: cfg?.currency }));
   const joinQueue = () => handleAction(() => createIntent(base, 'enqueue', clientId!, {}));
   const leaveQueue = () => handleAction(() => createIntent(base, 'leave_queue', clientId!, {}));
   const requeue = () => handleAction(() => createIntent(base, 'requeue_after_match', clientId!, {}));
@@ -196,6 +223,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     switch (step) {
       case 'register':
         return <DialogHeader><DialogTitle className="flex items-center gap-2"><UserPlus /> Register for Session</DialogTitle><DialogDescription>Enter your details to join the open play session.</DialogDescription></DialogHeader>;
+      case 'terms':
       case 'pay':
         return <DialogHeader><DialogTitle className="flex items-center gap-2"><CreditCard /> Complete Your Payment</DialogTitle><DialogDescription>Use the details below to pay, then enter the reference number.</DialogDescription></DialogHeader>;
       case 'confirm':
@@ -211,6 +239,8 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
   return (
     <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
+      <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
+
         <Card className="w-full border-none shadow-none rounded-t-lg">
           <div className="p-6">
             {renderHeader()}
@@ -227,7 +257,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
                     <div className="flex justify-between items-center mb-1">
                         <label className="text-sm font-medium">Skill Level</label>
                         <DialogTrigger asChild>
-                             <Button variant="link" size="sm" className="p-0 h-auto">Don't know your level? Take a test.</Button>
+                             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setAssessmentOpen(true)}>Don't know your level? Take a test.</Button>
                         </DialogTrigger>
                     </div>
                     <Select onValueChange={(v) => setLevel(Number(v))} value={String(level)}>
@@ -245,14 +275,14 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
                 </div>
             </CardContent>
             <CardFooter>
-                <Button className="w-full" onClick={doRegisterAndQueue} disabled={loading || !nickname}>
+                <Button className="w-full" onClick={handleRegistrationSubmit} disabled={loading || !nickname}>
                     {loading ? <Loader2 className="animate-spin" /> : <UserPlus />} Save & Continue
                 </Button>
             </CardFooter>
             </>
         )}
 
-        {step === 'pay' && (
+        {(step === 'terms' || step === 'pay') && (
             <>
             <CardContent className="space-y-4 pt-0">
                 {!cfg ? <Loader2 className="mx-auto animate-spin" /> : (
@@ -268,16 +298,11 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
                                 {cfg.qrUrl && <img src={cfg.qrUrl} data-ai-hint="qr code" className="rounded-lg shadow-sm mx-auto max-w-[200px]" alt="Payment QR Code" />}
                             </AlertDescription>
                         </Alert>
-                        
-                        <div>
-                            <label className="text-sm font-medium mt-4 block">Payment Reference #</label>
-                            <Input placeholder="e.g., transaction ID" value={refCode} onChange={e => setRef(e.target.value)} />
-                        </div>
                     </>
                 )}
             </CardContent>
             <CardFooter>
-                <Button className="w-full" onClick={submitPayment} disabled={loading || !refCode || !cfg}>
+                <Button className="w-full" onClick={submitPayment} disabled={loading || !cfg}>
                     {loading ? <Loader2 className="animate-spin" /> : <CreditCard />} I Paid – Submit for Confirmation
                 </Button>
             </CardFooter>
@@ -333,7 +358,18 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
             </>
         )}
         </Card>
+        
+        <TermsAndConditionsDialog onAgree={doRegisterAndQueue} />
+        
+        <DialogTrigger asChild>
+          <button className="hidden">Open T&C</button>
+        </DialogTrigger>
+
         <SkillAssessmentForm onComplete={handleAssessmentComplete} />
+      
+      </Dialog>
     </Dialog>
   );
 }
+
+    
