@@ -13,7 +13,14 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 type Step = 'register' | 'pay' | 'confirm' | 'queue' | 'in_match';
 
-export default function PlayerWizard({ orgId, venueId, sessionId }: { orgId: string, venueId: string, sessionId: string }) {
+interface PlayerWizardProps {
+    orgId: string;
+    venueId: string;
+    sessionId: string;
+    onComplete?: () => void;
+}
+
+export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: PlayerWizardProps) {
   const [clientId, setClientId] = useState<string | null>(null);
 
   const [cfg, setCfg] = useState<any>(null);
@@ -73,6 +80,12 @@ export default function PlayerWizard({ orgId, venueId, sessionId }: { orgId: str
     // Any other paid state falls into the queueing logic.
     return 'queue';
   }, [me, queueEntry]);
+
+  useEffect(() => {
+    if (step === 'queue' || step === 'in_match') {
+        onComplete?.();
+    }
+  }, [step, onComplete]);
   
   const handleAction = async (action: () => Promise<any>) => {
     setLoading(true);
@@ -93,11 +106,11 @@ export default function PlayerWizard({ orgId, venueId, sessionId }: { orgId: str
   const requeue = () => handleAction(() => createIntent(base, 'requeue_after_match', clientId!, {}));
 
   if (!clientId) {
-    return <Card className="w-full"><CardHeader><CardTitle>Loading...</CardTitle></CardHeader></Card>
+    return <Card className="w-full border-none shadow-none"><CardHeader><CardTitle>Loading...</CardTitle></CardHeader></Card>
   }
   
   return (
-    <Card className="w-full animate-in fade-in-50">
+    <Card className="w-full border-none shadow-none rounded-none">
       {step === 'register' && (
         <>
           <CardHeader>
@@ -166,18 +179,23 @@ export default function PlayerWizard({ orgId, venueId, sessionId }: { orgId: str
       )}
 
       {step === 'confirm' && (
-        <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
-            <Clock className="h-12 w-12 text-primary mx-auto mb-4" />
-            <h2 className="text-xl font-semibold">Waiting for Confirmation</h2>
-            <p className="text-muted-foreground">A coach will approve your payment of <span className='font-semibold'>${((cfg?.amountCents || 0) / 100).toFixed(2)}</span> shortly.</p>
-            <p className="text-sm mt-2">Your reference: <code className='font-mono bg-muted px-1 py-0.5 rounded'>{me.paymentRef}</code></p>
-        </CardContent>
+        <>
+            <CardHeader>
+                <CardTitle>Waiting for Confirmation</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
+                <Clock className="h-12 w-12 text-primary mx-auto mb-4" />
+                <h2 className="text-xl font-semibold">Confirmation Pending</h2>
+                <p className="text-muted-foreground">A coach will approve your payment of <span className='font-semibold'>${((cfg?.amountCents || 0) / 100).toFixed(2)}</span> shortly.</p>
+                <p className="text-sm mt-2">Your reference: <code className='font-mono bg-muted px-1 py-0.5 rounded'>{me.paymentRef}</code></p>
+            </CardContent>
+        </>
       )}
 
       {step === 'queue' && (
         <>
             <CardHeader>
-                <CardTitle>Player Actions</CardTitle>
+                <CardTitle>You're All Set!</CardTitle>
                 <CardDescription>You are paid and ready to play.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -204,14 +222,19 @@ export default function PlayerWizard({ orgId, venueId, sessionId }: { orgId: str
       )}
       
       {step === 'in_match' && (
-        <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
-            <Swords className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <h2 className="text-xl font-semibold">Match in Progress!</h2>
-            <p className="text-muted-foreground">Good luck! Once your game is finished, tap the button below.</p>
-            <Button className="w-full mt-6" onClick={requeue} disabled={loading}>
-                {loading ? <Loader2 className="animate-spin" /> : <Repeat />} Match Over – Rejoin Queue
-            </Button>
-        </CardContent>
+        <>
+            <CardHeader>
+                <CardTitle>Match in Progress</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
+                <Swords className="h-12 w-12 text-destructive mx-auto mb-4" />
+                <h2 className="text-xl font-semibold">Good Luck!</h2>
+                <p className="text-muted-foreground">Once your game is finished, tap the button below.</p>
+                <Button className="w-full mt-6" onClick={requeue} disabled={loading}>
+                    {loading ? <Loader2 className="animate-spin" /> : <Repeat />} Match Over – Rejoin Queue
+                </Button>
+            </CardContent>
+        </>
       )}
     </Card>
   );

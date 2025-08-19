@@ -1,3 +1,4 @@
+import React from 'react';
 
 const BadmintonIcon = () => (
   <svg
@@ -25,7 +26,7 @@ const BadmintonIcon = () => (
 );
 
 
-export function Header() {
+export function Header({ children }: { children?: React.ReactNode}) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center justify-between">
@@ -36,6 +37,7 @@ export function Header() {
             <span className="text-foreground">Commander</span>
           </h1>
         </div>
+        {children && <div>{children}</div>}
       </div>
     </header>
   );
