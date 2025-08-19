@@ -89,15 +89,15 @@ export default function LandingPage() {
               </CardContent>
             </Card>
             <Card className="bg-background">
-                <CardHeader>
-                    <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit">
-                        <Gamepad2 className="h-8 w-8 text-primary"/>
-                    </div>
-                    <CardTitle>Live Dashboard</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">See real-time court status, who's playing, and who's next in line from any device, keeping everyone informed.</p>
-                </CardContent>
+              <CardHeader>
+                <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit">
+                    <Gamepad2 className="h-8 w-8 text-primary"/>
+                </div>
+                <CardTitle>Live Dashboard</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">See real-time court status, who's playing, and who's next in line from any device, keeping everyone informed.</p>
+              </CardContent>
             </Card>
           </div>
         </section>
