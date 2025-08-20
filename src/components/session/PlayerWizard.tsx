@@ -177,17 +177,6 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
       if (s.exists()) {
         const data = s.data() as PaymentCfg;
         setCfg(data);
-      } else {
-          // Provide a default config with the placeholder QR if nothing exists
-          setCfg({
-              amountCents: 1000,
-              currency: 'PHP',
-              eWallets: {
-                  gcash: { accountNumber: '09171234567' },
-                  maya: { accountNumber: '09171234567' },
-                  gotym: { accountNumber: '09171234567' }
-              }
-          });
       }
     });
     return () => unsub();
