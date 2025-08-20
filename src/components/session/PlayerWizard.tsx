@@ -45,7 +45,7 @@ const skillLevels: Record<Letter, number> = { A: 6, B: 5, C: 4, D: 3, E: 2, F: 1
 interface PaymentCfg {
   amountCents: number;
   currency: string;
-  eWallets?: Record<EWallet, { accountNumber: string; qrUrl?: string }>
+  eWallets?: Record<string, { accountNumber: string; qrUrl?: string }>
 }
 
 const currency = (amountCents?: number, code: string = 'PHP') => {
@@ -152,7 +152,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   // UI state
   const [assessmentOpen, setAssessmentOpen] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
-  const [selectedEWallet, setSelectedEWallet] = useState<EWallet>('gcash');
+  const [selectedEWallet, setSelectedEWallet] = useState<string>('gcash');
   const [busy, setBusy] = useState<BusyKind>(null);
   const submittedRef = useRef(false);
   const { toast } = useToast();
@@ -441,23 +441,29 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
                           Please pay <span className="font-semibold">{currency(cfg?.amountCents, cfg?.currency)}</span> to join the session.
                         </AlertDescription>
                       </Alert>
-                      <Select onValueChange={(v: EWallet) => setSelectedEWallet(v)} defaultValue={selectedEWallet}>
+                      <Select onValueChange={(v: string) => setSelectedEWallet(v)} defaultValue={selectedEWallet}>
                         <SelectTrigger><SelectValue placeholder="Select e-wallet" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="gcash">Gcash</SelectItem>
-                          <SelectItem value="maya">Maya</SelectItem>
-                          <SelectItem value="gotym">GoTym</SelectItem>
+                          {cfg?.eWallets && Object.keys(cfg.eWallets).map(wallet => (
+                            <SelectItem key={wallet} value={wallet} className="capitalize">{wallet}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
 
-                      {currentPaymentDetails ? (
-                        <div className="p-4 bg-muted rounded-lg text-center space-y-3">
-                          <p className='text-sm text-muted-foreground'>Send payment to:</p>
-                          <div className="flex items-center justify-center gap-2">
-                            <code className="px-2 py-1 bg-background rounded-md text-primary font-mono">{currentPaymentDetails.accountNumber}</code>
-                            <Button variant="outline" size="sm" onClick={() => copyToClipboard(currentPaymentDetails.accountNumber)}>Copy</Button>
-                          </div>
-                        </div>
+                      {cfg ? (
+                        currentPaymentDetails ? (
+                            <div className="p-4 bg-muted rounded-lg text-center space-y-3">
+                              <p className='text-sm text-muted-foreground'>Send payment to:</p>
+                              <div className="flex items-center justify-center gap-2">
+                                <code className="px-2 py-1 bg-background rounded-md text-primary font-mono">{currentPaymentDetails.accountNumber}</code>
+                                <Button variant="outline" size="sm" onClick={() => copyToClipboard(currentPaymentDetails.accountNumber)}>Copy</Button>
+                              </div>
+                            </div>
+                        ) : (
+                            <div className="p-4 bg-muted rounded-lg text-center space-y-3">
+                                <p className="text-sm text-muted-foreground">Payment details for <span className="font-semibold capitalize">{selectedEWallet}</span> are not configured. Please select another or contact an admin.</p>
+                            </div>
+                        )
                       ) : (
                          <div className="p-4 bg-muted rounded-lg text-center space-y-3">
                             <Loader2 className="animate-spin mx-auto text-muted-foreground" />
@@ -467,7 +473,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
                     </div>
                 </CardContent>
                 <CardFooter className="px-6 pb-6">
-                  <Button className="w-full" onClick={submitPayment} disabled={busy !== null || !cfg || !currentPaymentDetails}>
+                  <Button className="w-full" onClick={submitPayment} disabled={busy !== null || !cfg}>
                     {busy === 'pay' ? <Loader2 className="animate-spin" /> : <CreditCard />} I Paid – Submit for Confirmation
                   </Button>
                 </CardFooter>
