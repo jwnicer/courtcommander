@@ -21,9 +21,11 @@ function QmPageContent() {
   const [waitingQueue, setWaitingQueue] = useState<any[] | undefined>(undefined);
   
   const gameType = session?.gameType || 'doubles';
+  const isLoading = session === null;
+
 
   useEffect(() => {
-    const unsubSession = onSnapshot(doc(db, basePath), (s) => setSession(s.data() as any));
+    const unsubSession = onSnapshot(doc(db, basePath), (s) => setSession(s.data() || null));
     const unsubCourts = onSnapshot(collection(db, `${basePath}/courts`), (s) => setCourts(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
     const unsubMatches = onSnapshot(collection(db, `${basePath}/matches`), (s) => setMatches(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
     const unsubParticipants = onSnapshot(collection(db, `${basePath}/participants`), (s) => setParticipants(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
@@ -38,8 +40,6 @@ function QmPageContent() {
     };
   }, [basePath]);
   
-  const isLoading = [courts, matches, participants, waitingQueue].some(data => data === undefined);
-
   if (isLoading) {
     return (
         <div className="flex items-center justify-center min-h-[60vh]">

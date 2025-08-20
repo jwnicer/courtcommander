@@ -36,11 +36,11 @@ function PlayPageContent() {
   const canCoach = me?.roles?.includes('coach');
   const gameType = session?.gameType || 'doubles';
   const myLevel = me?.level || 3;
-  const isLoading = [courts, matches, participants, waitingQueue, me].some(data => data === undefined);
+  const isLoading = session === null;
 
 
   useEffect(() => {
-    const unsubSession = onSnapshot(doc(db, basePath), (s) => setSession(s.data() as any));
+    const unsubSession = onSnapshot(doc(db, basePath), (s) => setSession(s.data() || null));
     const unsubCourts = onSnapshot(collection(db, `${basePath}/courts`), (s) => setCourts(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
     const unsubMatches = onSnapshot(collection(db, `${basePath}/matches`), (s) => setMatches(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
     const unsubParticipants = onSnapshot(collection(db, `${basePath}/participants`), (s) => setParticipants(s.docs.map(d => ({ id: d.id, ...d.data() })) as any));
