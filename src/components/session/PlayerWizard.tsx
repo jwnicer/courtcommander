@@ -233,7 +233,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     setOptimistic('terms');
     
     try {
-      await withTimeout(createIntent(base, 'register', clientId, { nickname, level, age }), 15000);
+      await withTimeout(createIntent(base, 'register', clientId, { nickname, level, age }), 120000);
       toast({ title: 'Saved', description: 'Proceed to Terms & Conditions.' });
     } catch (e: any) {
       // Revert optimism on failure
