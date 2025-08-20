@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Palette, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import PaymentSettings from '@/components/session/PaymentSettings';
 
 const themes = [
     { name: 'Default', primary: '45 100% 52%', background: '60 56% 91%', accent: '36 100% 50%' },
@@ -95,6 +96,8 @@ function AdminPageContent() {
                 courts={courts}
                 basePath={basePath}
             />
+
+            <PaymentSettings basePath={basePath} />
 
             <Card>
                 <CardHeader>
