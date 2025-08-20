@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Home, KeyRound, Loader2, X } from "lucide-react";
+import { Home, KeyRound, Loader2, LogOut, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
@@ -92,6 +92,16 @@ export default function AdminLayout({
     }, 500);
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('isAdminAuthenticated');
+    setPin('');
+    toast({
+        title: 'Logged Out',
+        description: 'You have been securely logged out.',
+    });
+  }
+
   const handlePinKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
         handlePinSubmit();
@@ -109,12 +119,20 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Header>
-            <Button asChild variant="outline">
-                <Link href="/">
-                    <Home className="mr-2" />
-                    Back to Site
-                </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+                <Button asChild variant="outline">
+                    <Link href="/">
+                        <Home className="mr-2" />
+                        Back to Site
+                    </Link>
+                </Button>
+                {isAuthenticated && (
+                    <Button variant="destructive" onClick={handleLogout}>
+                        <LogOut className="mr-2" />
+                        Log Out
+                    </Button>
+                )}
+            </div>
         </Header>
         <main className="flex-grow container mx-auto p-4 md:p-8">
             {!isAuthenticated ? (
