@@ -1,6 +1,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Shield } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function TermsPage() {
     const effectiveDate = new Date().toLocaleDateString('en-US', {
@@ -16,9 +19,28 @@ export default function TermsPage() {
           <Link href="/" className="font-bold text-lg">
             CourtCommander
           </Link>
-          <Link href="/play?action=join" className="text-primary hover:underline">
-            Join a Session
-          </Link>
+          <div className="flex items-center gap-2">
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button asChild variant="ghost" size="icon">
+                            <Link href="/admin">
+                                <Shield />
+                                <span className="sr-only">Admin Panel</span>
+                            </Link>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Admin Panel</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+            <Button asChild>
+                <Link href="/play?action=join">
+                    Join a Session
+                </Link>
+            </Button>
+          </div>
         </div>
       </header>
 

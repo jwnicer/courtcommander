@@ -1,4 +1,3 @@
-
 'use client';
 import { Header } from "@/components/layout/Header";
 import { Suspense, useEffect, useState } from 'react';
@@ -6,12 +5,14 @@ import { onSnapshot, doc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getClientId } from '@/lib/clientId';
 import LiveView from "@/components/session/LiveView";
-import { UserPlus } from "lucide-react";
+import { Shield, UserPlus } from "lucide-react";
 import MatchSuggester from "@/components/ai/MatchSuggester";
 import PlayerWizard from "@/components/session/PlayerWizard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useSearchParams } from "next/navigation";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import Link from "next/link";
 
 
 function PlayPageContent() {
@@ -63,14 +64,31 @@ function PlayPageContent() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <Header>
-            {!me && (
-                <DialogTrigger asChild>
-                    <Button>
-                        <UserPlus />
-                        Join Session
-                    </Button>
-                </DialogTrigger>
-            )}
+            <div className="flex items-center gap-2">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button asChild variant="ghost" size="icon">
+                                <Link href="/admin">
+                                    <Shield />
+                                    <span className="sr-only">Admin Panel</span>
+                                </Link>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Admin Panel</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                {!me && (
+                    <DialogTrigger asChild>
+                        <Button>
+                            <UserPlus />
+                            Join Session
+                        </Button>
+                    </DialogTrigger>
+                )}
+            </div>
         </Header>
         <main className="flex-grow container mx-auto p-4 md:p-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
