@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
 
-const ADMIN_PIN = '1234'; // The secret PIN
+const ADMIN_PIN = '96321478'; // The secret PIN
 
 // Create a new, custom DialogContent component
 const CustomDialogContent = React.forwardRef<
@@ -123,7 +123,7 @@ export default function AdminLayout({
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2"><KeyRound /> Admin Access</DialogTitle>
                             <DialogDescription>
-                                Please enter the 4-digit PIN to access the admin dashboard.
+                                Please enter the 8-digit PIN to access the admin dashboard.
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
@@ -131,12 +131,12 @@ export default function AdminLayout({
                             <Input
                                 id="pin-input"
                                 type="password"
-                                maxLength={4}
+                                maxLength={8}
                                 value={pin}
                                 onChange={(e) => setPin(e.target.value)}
                                 onKeyDown={handlePinKeyPress}
                                 className="text-center text-2xl tracking-[1em]"
-                                placeholder="••••"
+                                placeholder="••••••••"
                             />
                         </div>
                         <DialogFooter>
