@@ -8,12 +8,11 @@ import { getClientId } from '@/lib/clientId';
 import LiveView from "@/components/session/LiveView";
 import AdminPanel from "@/components/session/AdminPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Shield } from "lucide-react";
+import { User, Shield, UserPlus } from "lucide-react";
 import MatchSuggester from "@/components/ai/MatchSuggester";
 import PlayerWizard from "@/components/session/PlayerWizard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { UserPlus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 
@@ -117,7 +116,10 @@ function PlayPageContent() {
             </Tabs>
         </main>
         <DialogContent className="p-0">
-          <PlayerWizard orgId={orgId} venueId={venueId} sessionId={sessionId} onComplete={() => setDialogOpen(false)} />
+            <DialogHeader className="p-6 pb-0">
+                <DialogTitle>Join Session</DialogTitle>
+            </DialogHeader>
+            <PlayerWizard orgId={orgId} venueId={venueId} sessionId={sessionId} onComplete={() => setDialogOpen(false)} />
         </DialogContent>
       </Dialog>
     </div>
