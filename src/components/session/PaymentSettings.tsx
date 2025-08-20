@@ -1,7 +1,7 @@
 
 'use client';
 import { useState, useEffect } from 'react';
-import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,7 +34,7 @@ const initialConfig: PaymentConfig = {
 };
 
 export default function PaymentSettings({ basePath }: PaymentSettingsProps) {
-  const [config, setConfig] = useState<PaymentConfig | null>(null);
+  const [config, setConfig] = useState<PaymentConfig>(initialConfig);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [newWalletName, setNewWalletName] = useState('');
@@ -46,7 +46,6 @@ export default function PaymentSettings({ basePath }: PaymentSettingsProps) {
       if (s.exists()) {
         setConfig(s.data() as PaymentConfig);
       } else {
-        // If the document doesn't exist, we can initialize it with defaults
         setConfig(initialConfig);
       }
       setLoading(false);
@@ -110,7 +109,6 @@ export default function PaymentSettings({ basePath }: PaymentSettingsProps) {
     if (!config) return;
     setIsSaving(true);
     try {
-      // Use setDoc with merge: true to create or update the document.
       await setDoc(doc(db, settingsPath), config, { merge: true });
       toast({ title: 'Settings Saved', description: 'Payment configuration has been updated.' });
     } catch (e: any) {
@@ -120,88 +118,80 @@ export default function PaymentSettings({ basePath }: PaymentSettingsProps) {
     }
   };
 
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2'><CreditCard/> Payment Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center p-8">
-          <Loader2 className="animate-spin text-primary" />
-          <p className="ml-4">Loading payment configuration...</p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className='flex items-center gap-2'><CreditCard/> Payment Settings</CardTitle>
-        <CardDescription>Configure session fee and accepted e-wallets. These settings are shown to players upon joining.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-                <Label htmlFor="amount">Entry Fee</Label>
-                <Input 
-                    id="amount" 
-                    type="number"
-                    value={(config?.amountCents || 0) / 100}
-                    onChange={handleAmountChange}
-                    placeholder="e.g. 10.00"
-                />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="currency">Currency</Label>
-                <Input 
-                    id="currency" 
-                    value={config?.currency || 'PHP'}
-                    onChange={(e) => setConfig(config ? {...config, currency: e.target.value} : null)}
-                    placeholder="e.g. PHP"
-                />
-            </div>
-        </div>
-
-        <div className="space-y-4">
-          {config && Object.entries(config.eWallets).map(([name, details]) => (
-            <div key={name} className="flex items-end gap-2 p-3 bg-muted/50 rounded-lg">
-              <div className="flex-grow space-y-2">
-                <Label htmlFor={`wallet-${name}`} className="capitalize font-semibold">{name}</Label>
-                <Input
-                  id={`wallet-${name}`}
-                  value={details.accountNumber}
-                  onChange={(e) => handleFieldChange(name, 'accountNumber', e.target.value)}
-                  placeholder="Account Number"
-                />
+    <fieldset disabled={loading || isSaving} className="group">
+      <Card>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2'>
+              <CreditCard/> Payment Settings
+              {loading && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+          </CardTitle>
+          <CardDescription>Configure session fee and accepted e-wallets. These settings are shown to players upon joining.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                  <Label htmlFor="amount">Entry Fee</Label>
+                  <Input 
+                      id="amount" 
+                      type="number"
+                      value={(config?.amountCents || 0) / 100}
+                      onChange={handleAmountChange}
+                      placeholder="e.g. 10.00"
+                  />
               </div>
-              <Button variant="destructive" size="icon" onClick={() => handleRemoveWallet(name)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-end gap-2 pt-4 border-t">
-          <div className="flex-grow space-y-2">
-            <Label htmlFor="new-wallet">New E-Wallet Name</Label>
-            <Input
-              id="new-wallet"
-              value={newWalletName}
-              onChange={(e) => setNewWalletName(e.target.value)}
-              placeholder="e.g., GoTym"
-            />
+              <div className="space-y-2">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Input 
+                      id="currency" 
+                      value={config?.currency || 'PHP'}
+                      onChange={(e) => setConfig(config ? {...config, currency: e.target.value} : null)}
+                      placeholder="e.g. PHP"
+                  />
+              </div>
           </div>
-          <Button variant="outline" onClick={handleAddWallet}>
-            <PlusCircle className="mr-2" /> Add
-          </Button>
-        </div>
 
-        <Button onClick={handleSave} disabled={isSaving} className="w-full">
-          {isSaving ? <Loader2 className="mr-2 animate-spin" /> : <Save className="mr-2" />}
-          Save All Payment Settings
-        </Button>
-      </CardContent>
-    </Card>
+          <div className="space-y-4">
+            {config && Object.entries(config.eWallets).map(([name, details]) => (
+              <div key={name} className="flex items-end gap-2 p-3 bg-muted/50 rounded-lg">
+                <div className="flex-grow space-y-2">
+                  <Label htmlFor={`wallet-${name}`} className="capitalize font-semibold">{name}</Label>
+                  <Input
+                    id={`wallet-${name}`}
+                    value={details.accountNumber}
+                    onChange={(e) => handleFieldChange(name, 'accountNumber', e.target.value)}
+                    placeholder="Account Number"
+                  />
+                </div>
+                <Button variant="destructive" size="icon" onClick={() => handleRemoveWallet(name)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-end gap-2 pt-4 border-t">
+            <div className="flex-grow space-y-2">
+              <Label htmlFor="new-wallet">New E-Wallet Name</Label>
+              <Input
+                id="new-wallet"
+                value={newWalletName}
+                onChange={(e) => setNewWalletName(e.target.value)}
+                placeholder="e.g., GoTym"
+              />
+            </div>
+            <Button variant="outline" onClick={handleAddWallet}>
+              <PlusCircle className="mr-2" /> Add
+            </Button>
+          </div>
+
+          <Button onClick={handleSave} disabled={isSaving} className="w-full group-disabled:cursor-not-allowed">
+            {isSaving ? <Loader2 className="mr-2 animate-spin" /> : <Save className="mr-2" />}
+            Save All Payment Settings
+          </Button>
+        </CardContent>
+      </Card>
+    </fieldset>
   );
 }
