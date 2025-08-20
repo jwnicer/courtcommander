@@ -254,7 +254,6 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     setBusy('pay');
     setOptimistic('confirm'); // Optimistically move to confirmation
     try {
-      // No timeout on payment submission
       await createIntent(base, 'submit_payment', clientId!, {
         amountCents: cfg?.amountCents,
         currency: cfg?.currency,
@@ -392,14 +391,11 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
             {uiStep === 'pay' && (
               <>
                 <CardContent className="space-y-4 pt-0 px-6">
-                  {!cfg ? (
-                    <div className="flex items-center justify-center py-10"><Loader2 className="animate-spin" /></div>
-                  ) : (
                     <div className='space-y-4'>
                       <Alert>
                         <AlertTitle>Payment Required</AlertTitle>
                         <AlertDescription>
-                          Please pay <span className="font-semibold">{currency(cfg.amountCents, cfg.currency)}</span> to join the session.
+                          Please pay <span className="font-semibold">{currency(cfg?.amountCents, cfg?.currency)}</span> to join the session.
                         </AlertDescription>
                       </Alert>
                       <Select onValueChange={(v: EWallet) => setSelectedEWallet(v)} defaultValue={selectedEWallet}>
@@ -411,7 +407,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
                         </SelectContent>
                       </Select>
 
-                      {currentPaymentDetails && (
+                      {currentPaymentDetails ? (
                         <div className="p-4 bg-muted rounded-lg text-center space-y-3">
                           {currentPaymentDetails.qrUrl && (
                             <img src={currentPaymentDetails.qrUrl} data-ai-hint="qr code" className="rounded-lg shadow-sm mx-auto max-w-[200px]" alt={`${selectedEWallet} QR Code`} />
@@ -422,9 +418,13 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
                             <Button variant="outline" size="sm" onClick={() => copyToClipboard(currentPaymentDetails.accountNumber)}>Copy</Button>
                           </div>
                         </div>
+                      ) : (
+                         <div className="p-4 bg-muted rounded-lg text-center space-y-3">
+                            <Loader2 className="animate-spin mx-auto text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground">Loading payment details...</p>
+                         </div>
                       )}
                     </div>
-                  )}
                 </CardContent>
                 <CardFooter className="px-6 pb-6">
                   <Button className="w-full" onClick={submitPayment} disabled={busy !== null || !cfg || !currentPaymentDetails}>
