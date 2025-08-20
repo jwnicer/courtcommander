@@ -1,8 +1,9 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Bot, CalendarClock, Trophy } from 'lucide-react';
+import { ArrowRight, Bot, CalendarClock, Shield, Trophy } from 'lucide-react';
 import Link from 'next/link';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const BadmintonIcon = () => (
   <svg
@@ -40,11 +41,28 @@ export default function LandingPage() {
               Court<span className="text-primary">Commander</span>
             </h1>
           </div>
-          <Button asChild size="lg" className="px-6 py-3 text-lg font-medium rounded-full">
-            <Link href="/play?action=join">
-              Join the Queue <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button asChild variant="ghost" size="icon">
+                            <Link href="/admin">
+                                <Shield />
+                                <span className="sr-only">Admin Panel</span>
+                            </Link>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Admin Panel</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+            <Button asChild size="lg" className="px-6 py-3 text-lg font-medium rounded-full">
+                <Link href="/play?action=join">
+                Join the Queue <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
