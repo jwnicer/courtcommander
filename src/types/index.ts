@@ -42,6 +42,7 @@ export interface Participant {
   cooldown: number;
   lastMatchEndedAt: Timestamp | null;
   paid: boolean;
+  paymentRef?: string;
 }
 
 export interface QueueItem {

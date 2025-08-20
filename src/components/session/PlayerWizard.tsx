@@ -292,7 +292,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
       case 'pay':
         return <DialogHeader><DialogTitle className="flex items-center gap-2"><CreditCard /> Complete Your Payment</DialogTitle><DialogDescription>Select an e-wallet, pay the fee, then submit for confirmation.</DialogDescription></DialogHeader>;
       case 'confirm':
-        return <DialogHeader><DialogTitle className="flex items-center gap-2"><Clock /> Waiting for Confirmation</DialogTitle><DialogDescription>An admin will verify your payment shortly.</DialogDescription></DialogHeader>;
+        return <DialogHeader><DialogTitle className="flex items-center gap-2"><Clock /> Waiting for Confirmation</DialogTitle><DialogDescription>A Queue Master will verify your payment shortly.</DialogDescription></DialogHeader>;
       case 'queue':
         return <DialogHeader><DialogTitle className="flex items-center gap-2"><CheckCircle /> You're All Set!</DialogTitle><DialogDescription>You are paid and ready to play.</DialogDescription></DialogHeader>;
       case 'in_match':
@@ -438,7 +438,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
               <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
                 <Clock className="h-12 w-12 text-primary mx-auto mb-4" />
                 <h2 className="text-xl font-semibold">Confirmation Pending</h2>
-                <p className="text-muted-foreground">An admin will approve your payment of <span className='font-semibold'>{currency(cfg?.amountCents, cfg?.currency)}</span> shortly.</p>
+                <p className="text-muted-foreground">A Queue Master will approve your payment of <span className='font-semibold'>{currency(cfg?.amountCents, cfg?.currency)}</span> shortly.</p>
                 {me?.paymentRef && (
                   <p className="text-sm mt-2">Your reference: <code className='font-mono bg-muted px-1 py-0.5 rounded'>{me.paymentRef}</code></p>
                 )}

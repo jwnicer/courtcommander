@@ -5,6 +5,7 @@ import { onSnapshot, doc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import LiveView from "@/components/session/LiveView";
 import MatchSuggester from "@/components/ai/MatchSuggester";
+import PaymentConfirmationPanel from '@/components/session/PaymentConfirmationPanel';
 
 function QmPageContent() {
   const orgId = "org_abc";
@@ -36,25 +37,33 @@ function QmPageContent() {
     };
   }, [basePath]);
 
+  const pendingConfirmation = participants.filter(p => p.paymentRef && !p.paid);
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1">
-            <MatchSuggester 
-                playerLevel={3} // QM doesn't have a level, so using default
-                availablePlayers={waitingQueue}
-                gameType={gameType}
-            />
-        </div>
-        <div className="lg:col-span-2">
-            <LiveView
-                basePath={basePath}
-                canCoach={true} // QM has coach privileges
-                courts={courts}
-                matches={matches}
-                participants={participants}
-                waitingQueue={waitingQueue}
-                gameType={gameType}
-            />
+    <div className="space-y-8">
+        <PaymentConfirmationPanel 
+            participants={pendingConfirmation}
+            basePath={basePath}
+        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+                <MatchSuggester 
+                    playerLevel={3} // QM doesn't have a level, so using default
+                    availablePlayers={waitingQueue}
+                    gameType={gameType}
+                />
+            </div>
+            <div className="lg:col-span-2">
+                <LiveView
+                    basePath={basePath}
+                    canCoach={true} // QM has coach privileges
+                    courts={courts}
+                    matches={matches}
+                    participants={participants}
+                    waitingQueue={waitingQueue}
+                    gameType={gameType}
+                />
+            </div>
         </div>
     </div>
   );
