@@ -93,23 +93,21 @@ const SkillAssessmentForm = ({ onComplete }: { onComplete: (level: Letter) => vo
 
 const TermsAndConditionsDialog = ({ onAgree }: { onAgree: () => void }) => {
     return (
-        <DialogContent className="max-w-3xl">
+        <DialogContent>
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2"><FileText /> Terms & Conditions</DialogTitle>
                 <DialogDescription>Please read and agree to the terms before participating.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="h-[60vh] pr-6">
-                 <div className="prose prose-stone dark:prose-invert max-w-none space-y-4 text-sm">
-                    <p>By clicking "I Agree," you acknowledge you have read, understood, and agree to the full <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms & Conditions</Link>, including the following key points:</p>
-                    <ul className="list-disc pl-5 space-y-2">
-                        <li><strong>Assumption of Risk:</strong> You voluntarily assume all risks associated with badminton, including injury.</li>
-                        <li><strong>Release of Liability:</strong> You release CourtCommander and its affiliates from any claims arising from your participation.</li>
-                        <li><strong>Code of Conduct:</strong> You agree to maintain a respectful and safe environment, with zero tolerance for profanity or harassment.</li>
-                        <li><strong>QM Authority:</strong> You agree that the Queue Master (QM) has final authority on all session-related matters.</li>
-                    </ul>
-                    <p>For the complete details, please review the <Link href="/terms" target="_blank" className="text-primary hover:underline">full Terms & Conditions page</Link>.</p>
-                </div>
-            </ScrollArea>
+            <div className="prose prose-stone dark:prose-invert max-w-none space-y-4 text-sm">
+                <p>By clicking "I Agree," you acknowledge you have read, understood, and agree to the full <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms & Conditions</Link>, including the following key points:</p>
+                <ul className="list-disc pl-5 space-y-2">
+                    <li><strong>Assumption of Risk:</strong> You voluntarily assume all risks associated with badminton, including injury.</li>
+                    <li><strong>Release of Liability:</strong> You release CourtCommander and its affiliates from any claims arising from your participation.</li>
+                    <li><strong>Code of Conduct:</strong> You agree to maintain a respectful and safe environment, with zero tolerance for profanity or harassment.</li>
+                    <li><strong>QM Authority:</strong> You agree that the Queue Master (QM) has final authority on all session-related matters.</li>
+                </ul>
+                <p>For the complete details, please review the <Link href="/terms" target="_blank" className="text-primary hover:underline">full Terms & Conditions page</Link>.</p>
+            </div>
             <DialogFooter>
                 <Button onClick={onAgree}><CheckCircle className="mr-2"/> I Agree</Button>
             </DialogFooter>
@@ -238,139 +236,143 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   };
 
   return (
-    <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
+    <>
       <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
-
-        <Card className="w-full border-none shadow-none rounded-t-lg">
-          <div className="p-6">
-            {renderHeader()}
-          </div>
-        
-        {step === 'register' && (
-            <>
-            <CardContent className="space-y-4 pt-0">
-                <div>
-                    <label className="text-sm font-medium">Nickname</label>
-                    <Input placeholder="e.g., ShuttleSmasher" value={nickname} onChange={e => setNick(e.target.value)} />
-                </div>
-                <div>
-                    <div className="flex justify-between items-center mb-1">
-                        <label className="text-sm font-medium">Skill Level</label>
-                        <DialogTrigger asChild>
-                             <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setAssessmentOpen(true)}>Don't know your level? Take a test.</Button>
-                        </DialogTrigger>
+        <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
+            <Card className="w-full border-none shadow-none rounded-t-lg">
+            <div className="p-6">
+                {renderHeader()}
+            </div>
+            
+            {step === 'register' && (
+                <>
+                <CardContent className="space-y-4 pt-0">
+                    <div>
+                        <label className="text-sm font-medium">Nickname</label>
+                        <Input placeholder="e.g., ShuttleSmasher" value={nickname} onChange={e => setNick(e.target.value)} />
                     </div>
-                    <Select onValueChange={(v) => setLevel(Number(v))} value={String(level)}>
-                        <SelectTrigger><SelectValue placeholder="Select your skill level" /></SelectTrigger>
-                        <SelectContent>
-                            {Object.entries(skillLevels).map(([grade, value]) => 
-                                <SelectItem key={grade} value={String(value)}>Level {grade}</SelectItem>
-                            )}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div>
-                    <label className="text-sm font-medium">Age</label>
-                    <Input type="number" min={8} max={99} value={age} onChange={e => setAge(Number(e.target.value))} />
-                </div>
-            </CardContent>
-            <CardFooter>
-                <Button className="w-full" onClick={handleRegistrationSubmit} disabled={loading || !nickname}>
-                    {loading ? <Loader2 className="animate-spin" /> : <UserPlus />} Save & Continue
-                </Button>
-            </CardFooter>
-            </>
-        )}
-
-        {(step === 'terms' || step === 'pay') && (
-            <>
-            <CardContent className="space-y-4 pt-0">
-                {!cfg ? <Loader2 className="mx-auto animate-spin" /> : (
-                    <>
-                        <Alert>
-                            <AlertTitle>Payment Details</AlertTitle>
-                            <AlertDescription className="space-y-2">
-                            <p>Pay <span className="font-semibold">${((cfg.amountCents || 0) / 100).toFixed(2)}</span> via {cfg.accountLabel}</p>
-                                <div className="flex items-center gap-2">
-                                    <code className="px-2 py-1 bg-background rounded-md text-primary font-mono">{cfg.accountNumber}</code>
-                                    <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(cfg.accountNumber)}>Copy</Button>
-                                </div>
-                                {cfg.qrUrl && <img src={cfg.qrUrl} data-ai-hint="qr code" className="rounded-lg shadow-sm mx-auto max-w-[200px]" alt="Payment QR Code" />}
-                            </AlertDescription>
-                        </Alert>
-                    </>
-                )}
-            </CardContent>
-            <CardFooter>
-                <Button className="w-full" onClick={submitPayment} disabled={loading || !cfg}>
-                    {loading ? <Loader2 className="animate-spin" /> : <CreditCard />} I Paid – Submit for Confirmation
-                </Button>
-            </CardFooter>
-            </>
-        )}
-
-        {step === 'confirm' && (
-            <>
-                <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
-                    <Clock className="h-12 w-12 text-primary mx-auto mb-4" />
-                    <h2 className="text-xl font-semibold">Confirmation Pending</h2>
-                    <p className="text-muted-foreground">A coach will approve your payment of <span className='font-semibold'>${((cfg?.amountCents || 0) / 100).toFixed(2)}</span> shortly.</p>
-                    <p className="text-sm mt-2">Your reference: <code className='font-mono bg-muted px-1 py-0.5 rounded'>{me.paymentRef}</code></p>
+                    <div>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="text-sm font-medium">Skill Level</label>
+                            <DialogTrigger asChild>
+                                <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setAssessmentOpen(true)}>Don't know your level? Take a test.</Button>
+                            </DialogTrigger>
+                        </div>
+                        <Select onValueChange={(v) => setLevel(Number(v))} value={String(level)}>
+                            <SelectTrigger><SelectValue placeholder="Select your skill level" /></SelectTrigger>
+                            <SelectContent>
+                                {Object.entries(skillLevels).map(([grade, value]) => 
+                                    <SelectItem key={grade} value={String(value)}>Level {grade}</SelectItem>
+                                )}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium">Age</label>
+                        <Input type="number" min={8} max={99} value={age} onChange={e => setAge(Number(e.target.value))} />
+                    </div>
                 </CardContent>
-            </>
-        )}
-
-        {step === 'queue' && (
-            <>
-                <CardContent className="pt-0">
-                {!queueEntry ? (
-                    <Button className="w-full" onClick={joinQueue} disabled={loading}>
-                        {loading ? <Loader2 className="animate-spin" /> : <ListPlus />}
-                        Join Queue
-                    </Button>
-                ) : (
-                    <Alert variant={queueEntry.status === 'waiting' ? 'default' : 'destructive'}>
-                        <AlertTitle>You're in the Queue!</AlertTitle>
-                        <AlertDescription>Your position will be updated automatically. You'll be notified when your match starts.</AlertDescription>
-                    </Alert>
-                )}
-                </CardContent>
-                {queueEntry?.status === 'waiting' && (
                 <CardFooter>
-                    <Button variant="destructive" className="w-full" onClick={leaveQueue} disabled={loading}>
-                        {loading ? <Loader2 className="animate-spin" /> : <ListX />} Leave Queue
+                    <Button className="w-full" onClick={handleRegistrationSubmit} disabled={loading || !nickname}>
+                        {loading ? <Loader2 className="animate-spin" /> : <UserPlus />} Save & Continue
                     </Button>
                 </CardFooter>
-                )}
-            </>
-        )}
-        
-        {step === 'in_match' && (
-            <>
-                <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
-                    <Swords className="h-12 w-12 text-destructive mx-auto mb-4" />
-                    <h2 className="text-xl font-semibold">Good Luck!</h2>
-                    <p className="text-muted-foreground">Once your game is finished, tap the button below.</p>
-                    <Button className="w-full mt-6" onClick={requeue} disabled={loading}>
-                        {loading ? <Loader2 className="animate-spin" /> : <Repeat />} Match Over – Rejoin Queue
-                    </Button>
+                </>
+            )}
+
+            {(step === 'terms' || step === 'pay') && (
+                <>
+                <CardContent className="space-y-4 pt-0">
+                    {!cfg ? <Loader2 className="mx-auto animate-spin" /> : (
+                        <>
+                            <Alert>
+                                <AlertTitle>Payment Details</AlertTitle>
+                                <AlertDescription className="space-y-2">
+                                <p>Pay <span className="font-semibold">${((cfg.amountCents || 0) / 100).toFixed(2)}</span> via {cfg.accountLabel}</p>
+                                    <div className="flex items-center gap-2">
+                                        <code className="px-2 py-1 bg-background rounded-md text-primary font-mono">{cfg.accountNumber}</code>
+                                        <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(cfg.accountNumber)}>Copy</Button>
+                                    </div>
+                                    {cfg.qrUrl && <img src={cfg.qrUrl} data-ai-hint="qr code" className="rounded-lg shadow-sm mx-auto max-w-[200px]" alt="Payment QR Code" />}
+                                </AlertDescription>
+                            </Alert>
+                        </>
+                    )}
                 </CardContent>
-            </>
-        )}
-        </Card>
-        
+                <CardFooter>
+                    <Button className="w-full" onClick={submitPayment} disabled={loading || !cfg}>
+                        {loading ? <Loader2 className="animate-spin" /> : <CreditCard />} I Paid – Submit for Confirmation
+                    </Button>
+                </CardFooter>
+                </>
+            )}
+
+            {step === 'confirm' && (
+                <>
+                    <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
+                        <Clock className="h-12 w-12 text-primary mx-auto mb-4" />
+                        <h2 className="text-xl font-semibold">Confirmation Pending</h2>
+                        <p className="text-muted-foreground">A coach will approve your payment of <span className='font-semibold'>${((cfg?.amountCents || 0) / 100).toFixed(2)}</span> shortly.</p>
+                        <p className="text-sm mt-2">Your reference: <code className='font-mono bg-muted px-1 py-0.5 rounded'>{me.paymentRef}</code></p>
+                    </CardContent>
+                </>
+            )}
+
+            {step === 'queue' && (
+                <>
+                    <CardContent className="pt-0">
+                    {!queueEntry ? (
+                        <Button className="w-full" onClick={joinQueue} disabled={loading}>
+                            {loading ? <Loader2 className="animate-spin" /> : <ListPlus />}
+                            Join Queue
+                        </Button>
+                    ) : (
+                        <Alert variant={queueEntry.status === 'waiting' ? 'default' : 'destructive'}>
+                            <AlertTitle>You're in the Queue!</AlertTitle>
+                            <AlertDescription>Your position will be updated automatically. You'll be notified when your match starts.</AlertDescription>
+                        </Alert>
+                    )}
+                    </CardContent>
+                    {queueEntry?.status === 'waiting' && (
+                    <CardFooter>
+                        <Button variant="destructive" className="w-full" onClick={leaveQueue} disabled={loading}>
+                            {loading ? <Loader2 className="animate-spin" /> : <ListX />} Leave Queue
+                        </Button>
+                    </CardFooter>
+                    )}
+                </>
+            )}
+            
+            {step === 'in_match' && (
+                <>
+                    <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
+                        <Swords className="h-12 w-12 text-destructive mx-auto mb-4" />
+                        <h2 className="text-xl font-semibold">Good Luck!</h2>
+                        <p className="text-muted-foreground">Once your game is finished, tap the button below.</p>
+                        <Button className="w-full mt-6" onClick={requeue} disabled={loading}>
+                            {loading ? <Loader2 className="animate-spin" /> : <Repeat />} Match Over – Rejoin Queue
+                        </Button>
+                    </CardContent>
+                </>
+            )}
+            </Card>
+            
+            <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
+                <SkillAssessmentForm onComplete={handleAssessmentComplete} />
+            </Dialog>
+
+        </Dialog>
+
         <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
-          <TermsAndConditionsDialog onAgree={doRegisterAndQueue} />
+            <TermsAndConditionsDialog onAgree={doRegisterAndQueue} />
         </Dialog>
-        
-        <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
-          <SkillAssessmentForm onComplete={handleAssessmentComplete} />
-        </Dialog>
-      
       </Dialog>
-    </Dialog>
+
+    </>
   );
 }
 
     
+    
+
     
