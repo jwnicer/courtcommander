@@ -4,6 +4,7 @@
 import type { Session, Participant, Court } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Shield, Settings, BarChart } from 'lucide-react';
+import { Skeleton } from '../ui/skeleton';
 
 interface AdminPanelProps {
   session: Session | null;
@@ -18,10 +19,18 @@ export default function AdminPanel({ session, participants, courts, basePath }: 
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Loading Session Info...</CardTitle>
+           <CardTitle className="flex items-center gap-2">
+                <Shield />
+                <Skeleton className="h-8 w-48" />
+            </CardTitle>
+            <Skeleton className="h-4 w-72" />
         </CardHeader>
         <CardContent>
-          <p>Please wait while the session data is being fetched.</p>
+          <div className="grid md:grid-cols-3 gap-4 text-center">
+            <Skeleton className="h-28 w-full" />
+            <Skeleton className="h-28 w-full" />
+            <Skeleton className="h-28 w-full" />
+          </div>
         </CardContent>
       </Card>
     );

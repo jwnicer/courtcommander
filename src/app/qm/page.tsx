@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import LiveView from "@/components/session/LiveView";
 import MatchSuggester from "@/components/ai/MatchSuggester";
 import PaymentConfirmationPanel from '@/components/session/PaymentConfirmationPanel';
+import { Loader2 } from 'lucide-react';
 
 function QmPageContent() {
   const orgId = "org_abc";
@@ -14,10 +15,10 @@ function QmPageContent() {
   const basePath = `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}`;
 
   const [session, setSession] = useState<any>(null);
-  const [courts, setCourts] = useState([]);
-  const [matches, setMatches] = useState([]);
-  const [participants, setParticipants] = useState<any[]>([]);
-  const [waitingQueue, setWaitingQueue] = useState([]);
+  const [courts, setCourts] = useState<any[] | undefined>(undefined);
+  const [matches, setMatches] = useState<any[] | undefined>(undefined);
+  const [participants, setParticipants] = useState<any[] | undefined>(undefined);
+  const [waitingQueue, setWaitingQueue] = useState<any[] | undefined>(undefined);
   
   const gameType = session?.gameType || 'doubles';
 
@@ -36,8 +37,18 @@ function QmPageContent() {
       unsubQueue();
     };
   }, [basePath]);
+  
+  const isLoading = [courts, matches, participants, waitingQueue].some(data => data === undefined);
 
-  const pendingConfirmation = participants.filter(p => p.paymentRef && !p.paid);
+  if (isLoading) {
+    return (
+        <div className="flex items-center justify-center min-h-[60vh]">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+    );
+  }
+
+  const pendingConfirmation = participants?.filter(p => p.paymentRef && !p.paid) || [];
 
   return (
     <div className="space-y-8">
@@ -49,7 +60,7 @@ function QmPageContent() {
             <div className="lg:col-span-1">
                 <MatchSuggester 
                     playerLevel={3} // QM doesn't have a level, so using default
-                    availablePlayers={waitingQueue}
+                    availablePlayers={waitingQueue || []}
                     gameType={gameType}
                 />
             </div>
@@ -57,10 +68,10 @@ function QmPageContent() {
                 <LiveView
                     basePath={basePath}
                     canCoach={true} // QM has coach privileges
-                    courts={courts}
-                    matches={matches}
-                    participants={participants}
-                    waitingQueue={waitingQueue}
+                    courts={courts || []}
+                    matches={matches || []}
+                    participants={participants || []}
+                    waitingQueue={waitingQueue || []}
                     gameType={gameType}
                 />
             </div>

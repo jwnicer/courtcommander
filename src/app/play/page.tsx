@@ -6,7 +6,7 @@ import { onSnapshot, doc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getClientId } from '@/lib/clientId';
 import LiveView from "@/components/session/LiveView";
-import { Shield, UserPlus, ClipboardList } from "lucide-react";
+import { Shield, UserPlus, ClipboardList, Loader2 } from "lucide-react";
 import MatchSuggester from "@/components/ai/MatchSuggester";
 import PlayerWizard from "@/components/session/PlayerWizard";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useSearchParams } from "next/navigation";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import Link from "next/link";
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 function PlayPageContent() {
@@ -24,17 +25,19 @@ function PlayPageContent() {
   const clientId = getClientId();
 
   const [session, setSession] = useState<any>(null);
-  const [courts, setCourts] = useState([]);
-  const [matches, setMatches] = useState([]);
-  const [participants, setParticipants] = useState<any[]>([]);
-  const [waitingQueue, setWaitingQueue] = useState([]);
-  const [me, setMe] = useState<any>(null);
+  const [courts, setCourts] = useState<any[] | undefined>(undefined);
+  const [matches, setMatches] = useState<any[] | undefined>(undefined);
+  const [participants, setParticipants] = useState<any[] | undefined>(undefined);
+  const [waitingQueue, setWaitingQueue] = useState<any[] | undefined>(undefined);
+  const [me, setMe] = useState<any>(undefined);
   const [dialogOpen, setDialogOpen] = useState(false);
   const searchParams = useSearchParams();
 
   const canCoach = me?.roles?.includes('coach');
   const gameType = session?.gameType || 'doubles';
   const myLevel = me?.level || 3;
+  const isLoading = [courts, matches, participants, waitingQueue, me].some(data => data === undefined);
+
 
   useEffect(() => {
     const unsubSession = onSnapshot(doc(db, basePath), (s) => setSession(s.data() as any));
@@ -56,7 +59,7 @@ function PlayPageContent() {
 
   useEffect(() => {
     const action = searchParams.get('action');
-    if (action === 'join' && !me) {
+    if (action === 'join' && me === null) { // only trigger if me is loaded and is null
       setDialogOpen(true);
     }
   }, [me, searchParams]);
@@ -66,7 +69,7 @@ function PlayPageContent() {
        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <Header>
             <div className="flex items-center gap-2">
-                {!me && (
+                {!me && me !== undefined && (
                     <DialogTrigger asChild>
                         <Button>
                             <UserPlus />
@@ -74,29 +77,47 @@ function PlayPageContent() {
                         </Button>
                     </DialogTrigger>
                 )}
+                 {me === undefined && <Skeleton className="h-10 w-32" />}
             </div>
         </Header>
         <main className="flex-grow container mx-auto p-4 md:p-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1">
-                <MatchSuggester 
-                    playerLevel={myLevel} 
-                    availablePlayers={waitingQueue}
-                    gameType={gameType}
-                />
-            </div>
-            <div className="lg:col-span-2">
-                <LiveView
-                    basePath={basePath}
-                    canCoach={canCoach}
-                    courts={courts}
-                    matches={matches}
-                    participants={participants}
-                    waitingQueue={waitingQueue}
-                    gameType={gameType}
-                />
-            </div>
-            </div>
+            {isLoading ? (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-1 space-y-4">
+                        <Skeleton className="h-48 w-full" />
+                    </div>
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Skeleton className="h-48 w-full" />
+                            <Skeleton className="h-48 w-full" />
+                            <Skeleton className="h-48 w-full" />
+                            <Skeleton className="h-48 w-full" />
+                        </div>
+                        <Skeleton className="h-96 w-full" />
+                    </div>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-1">
+                        <MatchSuggester 
+                            playerLevel={myLevel} 
+                            availablePlayers={waitingQueue || []}
+                            gameType={gameType}
+                        />
+                    </div>
+                    <div className="lg:col-span-2">
+                        <LiveView
+                            basePath={basePath}
+                            canCoach={!!canCoach}
+                            courts={courts || []}
+                            matches={matches || []}
+                            participants={participants || []}
+                            waitingQueue={waitingQueue || []}
+                            gameType={gameType}
+                        />
+                    </div>
+                </div>
+            )}
         </main>
         <DialogContent className="p-0">
             <DialogHeader className="p-6 pb-0">
@@ -142,7 +163,29 @@ function PlayPageContent() {
 
 export default function PlayPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+        <div className="min-h-screen bg-background text-foreground flex flex-col">
+             <Header>
+                <Skeleton className="h-10 w-32" />
+             </Header>
+             <main className="flex-grow container mx-auto p-4 md:p-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-1 space-y-4">
+                        <Skeleton className="h-48 w-full" />
+                    </div>
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Skeleton className="h-48 w-full" />
+                            <Skeleton className="h-48 w-full" />
+                            <Skeleton className="h-48 w-full" />
+                            <Skeleton className="h-48 w-full" />
+                        </div>
+                        <Skeleton className="h-96 w-full" />
+                    </div>
+                </div>
+             </main>
+        </div>
+    }>
       <PlayPageContent />
     </Suspense>
   );

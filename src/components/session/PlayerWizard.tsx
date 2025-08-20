@@ -17,6 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Skeleton } from '../ui/skeleton';
 
 // ————————————————————————————————————————————————————————————————
 // Bugfix summary
@@ -193,17 +194,18 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   }, [orgId, venueId, sessionId]);
 
   // Compute step from server state
-  const remoteStep: Step = useMemo(() => {
+  const remoteStep: Step | 'loading' = useMemo(() => {
+    if (!clientId || me === undefined) return 'loading';
     if (!me) return 'register';
     if (!me.agreedToTerms) return 'terms';
     if ((cfg?.amountCents || 0) > 0 && !me.paid) return me.paymentRef ? 'confirm' : 'pay';
     if (queueEntry?.status === 'playing') return 'in_match';
     return 'queue';
-  }, [me, queueEntry, cfg]);
+  }, [me, queueEntry, cfg, clientId]);
 
   // Optimistic step
   const [optimistic, setOptimistic] = useState<Step | null>(null);
-  const uiStep: Step = optimistic ?? remoteStep;
+  const uiStep: Step | 'loading' = optimistic ?? remoteStep;
 
   // Sync optimism → server state. Clear optimistic state once remote state catches up.
   useEffect(() => {
@@ -316,10 +318,13 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
         return <DialogHeader><DialogTitle className="flex items-center gap-2"><CheckCircle /> You're All Set!</DialogTitle><DialogDescription>You are paid and ready to play.</DialogDescription></DialogHeader>;
       case 'in_match':
         return <DialogHeader><DialogTitle className="flex items-center gap-2"><Swords /> Match in Progress</DialogTitle><DialogDescription>Good luck! Re-queue when you're done.</DialogDescription></DialogHeader>;
+      case 'loading':
+        return <DialogHeader><DialogTitle className="flex items-center gap-2"><Loader2 className="animate-spin" /> Initializing...</DialogTitle><DialogDescription>Getting your session details ready.</DialogDescription></DialogHeader>;
     }
   };
 
   const Stepper = () => {
+    if (uiStep === 'loading') return null;
     const steps: Array<{ id: Step; label: string }> = [
       { id: 'register', label: 'Register' },
       { id: 'terms', label: 'Terms' },
@@ -345,7 +350,17 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   if (!clientId) {
     return (
       <Card className="w-full border-none shadow-none">
-        <CardHeader><CardTitle>Loading...</CardTitle></CardHeader>
+        <CardContent className="p-6 space-y-4">
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-[250px]" />
+              <Skeleton className="h-4 w-[200px]" />
+            </div>
+          </div>
+           <Skeleton className="h-10 w-full" />
+           <Skeleton className="h-10 w-full" />
+        </CardContent>
       </Card>
     );
   }
@@ -364,6 +379,14 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
         <AnimatePresence mode="wait">
           <motion.div key={uiStep} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
+
+            {uiStep === 'loading' && (
+                <CardContent>
+                    <div className="flex justify-center items-center h-40">
+                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    </div>
+                </CardContent>
+            )}
 
             {uiStep === 'register' && (
               <form onSubmit={handleRegistrationSubmit}>
