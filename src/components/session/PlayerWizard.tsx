@@ -265,16 +265,21 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   const submitPayment = async () => {
     if (!cfg) return;
     setBusy('pay');
-    setOptimistic('confirm'); // Optimistically move to confirmation
+    setOptimistic('confirm');
+
+    // Generate a simple 6-digit alphanumeric reference code.
+    const paymentRef = Math.random().toString(36).substring(2, 8).toUpperCase();
+
     try {
       await createIntent(base, 'submit_payment', clientId!, {
         amountCents: cfg?.amountCents,
         currency: cfg?.currency,
         method: selectedEWallet,
+        paymentRef: paymentRef,
       });
-      toast({ title: 'Payment submitted', description: 'Awaiting admin confirmation.' });
+      toast({ title: 'Payment submitted', description: `Your reference code is ${paymentRef}. Please await confirmation.` });
     } catch (e: any) {
-      setOptimistic('pay'); // Revert on failure
+      setOptimistic('pay');
       toast({ title: 'Payment submission failed', description: e?.message ?? 'Please try again.', variant: 'destructive' });
     } finally { setBusy(null); }
   };
