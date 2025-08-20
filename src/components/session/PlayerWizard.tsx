@@ -191,23 +191,21 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
       await action();
     } catch (e: any) {
       console.error("Action failed", e);
+      toast({
+        variant: "destructive",
+        title: "Action Failed",
+        description: e.message || "An unexpected error occurred."
+      })
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRegistrationSubmit = async () => {
-    setLoading(true);
-    try {
+  const handleRegistrationSubmit = () => handleAction(async () => {
       if (!clientId) throw new Error("Client ID not available.");
       await createIntent(base, 'register', clientId, { nickname, level, age });
-      setTermsOpen(true);
-    } catch (e) {
-      console.error("Registration failed", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+      // The useEffect for 'me' will pick up the change and move to the 'terms' step.
+  });
 
   const handleAgreeToTerms = () => handleAction(async () => {
     await createIntent(base, 'agree_to_terms', clientId!, {});
@@ -232,6 +230,13 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     navigator.clipboard.writeText(text);
     toast({ title: "Copied!", description: "Account number copied to clipboard." });
   }
+  
+  // Open terms dialog when user is created but hasn't agreed to terms
+  useEffect(() => {
+    if(me && !me.agreedToTerms) {
+      setTermsOpen(true);
+    }
+  }, [me]);
 
   const currentPaymentDetails = cfg?.eWallets?.[selectedEWallet];
 
@@ -307,7 +312,10 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
         {step === 'terms' && (
             <CardContent className="px-6 pb-6 text-center">
                  <p className='text-muted-foreground mb-4'>You must agree to the terms to continue.</p>
-                 <Button onClick={() => setTermsOpen(true)}>View Terms & Conditions</Button>
+                 <Button onClick={() => setTermsOpen(true)} disabled={loading}>
+                    {loading ? <Loader2 className="animate-spin" /> : null}
+                    View Terms & Conditions
+                 </Button>
             </CardContent>
         )}
 
