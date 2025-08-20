@@ -111,7 +111,7 @@ const SkillAssessmentForm = ({ onComplete }: { onComplete: (level: Letter) => vo
   );
 };
 
-const TermsAndConditionsDialog = ({ onAgree, onOpenChange, open }: { onAgree: () => void; onOpenChange: (open: boolean) => void; open: boolean; }) => (
+const TermsAndConditionsDialog = ({ onAgree, onOpenChange, open, busy }: { onAgree: () => void; onOpenChange: (open: boolean) => void; open: boolean; busy: boolean; }) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent>
       <DialogHeader>
@@ -128,7 +128,10 @@ const TermsAndConditionsDialog = ({ onAgree, onOpenChange, open }: { onAgree: ()
         </ul>
       </div>
       <DialogFooter>
-        <Button onClick={onAgree}><CheckCircle className="mr-2"/> I Agree</Button>
+        <Button onClick={onAgree} disabled={busy}>
+            {busy ? <Loader2 className="animate-spin" /> : <CheckCircle className="mr-2"/>}
+            I Agree
+        </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
@@ -189,18 +192,20 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   const [optimistic, setOptimistic] = useState<Step | null>(null);
   const uiStep: Step = optimistic ?? remoteStep;
 
-  // Sync optimism → server
+  // Sync optimism → server state. Clear optimistic state once remote state catches up.
   useEffect(() => {
     if (!optimistic) return;
     if (optimistic === 'terms' && me?.agreedToTerms) setOptimistic(null);
-    if (optimistic === 'pay' && me?.agreedToTerms) setOptimistic(null);
-    if (optimistic === 'confirm' && me?.paymentRef) setOptimistic(null);
-  }, [optimistic, me]);
+    if (optimistic === 'pay' && me?.paymentRef) setOptimistic(null);
+    if (optimistic === 'confirm' && me?.paid) setOptimistic(null);
+    if (optimistic === 'queue' && queueEntry) setOptimistic(null);
+  }, [optimistic, me, queueEntry]);
 
-  // Auto-open Terms
+
+  // Auto-open Terms dialog when on the 'terms' step.
   useEffect(() => { setTermsOpen(uiStep === 'terms'); }, [uiStep]);
 
-  // Notify parent when ready to play
+  // Notify parent component when wizard is complete (player is in queue or match).
   useEffect(() => { if (uiStep === 'queue' || uiStep === 'in_match') onComplete?.(); }, [uiStep, onComplete]);
 
   // Actions
@@ -213,15 +218,13 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
     // Optimistic UI first — switch to Terms immediately
     setOptimistic('terms');
-    setTermsOpen(true);
-
+    
     try {
       await withTimeout(createIntent(base, 'register', clientId, { nickname, level, age }), 15000);
       toast({ title: 'Saved', description: 'Proceed to Terms & Conditions.' });
     } catch (e: any) {
       // Revert optimism on failure
       setOptimistic(null);
-      setTermsOpen(false);
       toast({ title: 'Registration failed', description: e?.message ?? 'Please try again.', variant: 'destructive' });
     } finally {
       setBusy(null);
@@ -231,35 +234,41 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
   const handleAgreeToTerms = async () => {
     setBusy('agree');
+    setOptimistic('pay'); // Optimistically move to payment
+    setTermsOpen(false); // Close dialog immediately
+
     try {
       await withTimeout(createIntent(base, 'agree_to_terms', clientId!, {}), 120000);
-      setTermsOpen(false);
-      setOptimistic('pay');
       toast({ title: 'Thanks!', description: 'Terms accepted. Proceed to payment.' });
     } catch (e: any) {
+      setOptimistic('terms'); // Revert on failure
+      setTermsOpen(true);
       toast({ title: 'Could not record agreement', description: e?.message ?? 'Please try again.', variant: 'destructive' });
-    } finally { setBusy(null); }
+    } finally { 
+        setBusy(null); 
+    }
   };
 
   const submitPayment = async () => {
     if (!cfg) return;
     setBusy('pay');
+    setOptimistic('confirm'); // Optimistically move to confirmation
     try {
       await withTimeout(createIntent(base, 'submit_payment', clientId!, {
         amountCents: cfg?.amountCents,
         currency: cfg?.currency,
         method: selectedEWallet,
       }), 20000);
-      setOptimistic('confirm');
       toast({ title: 'Payment submitted', description: 'Awaiting admin confirmation.' });
     } catch (e: any) {
+      setOptimistic('pay'); // Revert on failure
       toast({ title: 'Payment submission failed', description: e?.message ?? 'Please try again.', variant: 'destructive' });
     } finally { setBusy(null); }
   };
 
-  const joinQueue = async () => { setBusy('enqueue'); try { await withTimeout(createIntent(base, 'enqueue', clientId!, {}), 10000); } catch(e) { console.error(e) } finally { setBusy(null); } };
-  const leaveQueue = async () => { setBusy('leave'); try { await withTimeout(createIntent(base, 'leave_queue', clientId!, {}), 10000); } catch(e) { console.error(e) } finally { setBusy(null); } };
-  const requeue = async () => { setBusy('requeue'); try { await withTimeout(createIntent(base, 'requeue_after_match', clientId!, {}), 10000); } catch(e) { console.error(e) } finally { setBusy(null); } };
+  const joinQueue = async () => { setBusy('enqueue'); try { await withTimeout(createIntent(base, 'enqueue', clientId!, {}), 10000); } catch(e) { console.error(e); } finally { setBusy(null); } };
+  const leaveQueue = async () => { setBusy('leave'); try { await withTimeout(createIntent(base, 'leave_queue', clientId!, {}), 10000); } catch(e) { console.error(e); } finally { setBusy(null); } };
+  const requeue = async () => { setBusy('requeue'); try { await withTimeout(createIntent(base, 'requeue_after_match', clientId!, {}), 10000); } catch(e) { console.error(e); } finally { setBusy(null); } };
 
   const handleAssessmentComplete = (calculatedLevel: Letter) => { setLevel(skillLevels[calculatedLevel]); setAssessmentOpen(false); };
 
@@ -327,7 +336,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
       <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
         <SkillAssessmentForm onComplete={handleAssessmentComplete} />
       </Dialog>
-      <TermsAndConditionsDialog open={termsOpen} onOpenChange={setTermsOpen} onAgree={handleAgreeToTerms} />
+      <TermsAndConditionsDialog open={termsOpen} onOpenChange={setTermsOpen} onAgree={handleAgreeToTerms} busy={busy === 'agree'} />
 
       <Card className="w-full border-none shadow-none rounded-t-lg">
         <Stepper />
