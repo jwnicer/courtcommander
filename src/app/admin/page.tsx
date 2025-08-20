@@ -87,50 +87,52 @@ function AdminPageContent() {
 
 
   return (
-    <div className="space-y-8">
-        <AdminPanel 
-            session={session}
-            participants={participants}
-            courts={courts}
-            basePath={basePath}
-        />
+    <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+        <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
+            <AdminPanel 
+                session={session}
+                participants={participants}
+                courts={courts}
+                basePath={basePath}
+            />
 
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Palette />
-                    Theme Customizer
-                </CardTitle>
-                <CardDescription>
-                    Select a pre-defined color scheme to apply to the entire site.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="theme-select">Theme</Label>
-                    <Select value={selectedTheme} onValueChange={setSelectedTheme}>
-                        <SelectTrigger id="theme-select">
-                            <SelectValue placeholder="Select a theme" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {themes.map(theme => (
-                                <SelectItem key={theme.name} value={theme.name}>
-                                    <span className="flex items-center gap-2">
-                                        <span className="w-4 h-4 rounded-full" style={{ backgroundColor: `hsl(${theme.primary})` }} />
-                                        {theme.name}
-                                    </span>
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                 <Button onClick={handleThemeUpdate} disabled={isSaving}>
-                    {isSaving ? <Loader2 className="mr-2 animate-spin" /> : null}
-                    Save Theme
-                </Button>
-            </CardContent>
-        </Card>
-    </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Palette />
+                        Theme Customizer
+                    </CardTitle>
+                    <CardDescription>
+                        Select a pre-defined color scheme to apply to the entire site.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="theme-select">Theme</Label>
+                        <Select value={selectedTheme} onValueChange={setSelectedTheme}>
+                            <SelectTrigger id="theme-select">
+                                <SelectValue placeholder="Select a theme" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {themes.map(theme => (
+                                    <SelectItem key={theme.name} value={theme.name}>
+                                        <span className="flex items-center gap-2">
+                                            <span className="w-4 h-4 rounded-full" style={{ backgroundColor: `hsl(${theme.primary})` }} />
+                                            {theme.name}
+                                        </span>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <Button onClick={handleThemeUpdate} disabled={isSaving}>
+                        {isSaving ? <Loader2 className="mr-2 animate-spin" /> : null}
+                        Save Theme
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+    </main>
   );
 }
 

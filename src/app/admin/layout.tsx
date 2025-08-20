@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import AdminNav from "@/components/layout/AdminNav";
 
 const ADMIN_PIN = '96321478'; // The secret PIN
 
@@ -137,7 +138,7 @@ export default function AdminLayout({
                 )}
             </div>
         </Header>
-        <main className="flex-grow container mx-auto p-4 md:p-8">
+        <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {!isAuthenticated ? (
                 <Dialog open={!isAuthenticated} onOpenChange={() => {}}>
                     <CustomDialogContent className="sm:max-w-md" hideCloseButton>
@@ -169,7 +170,10 @@ export default function AdminLayout({
                     </CustomDialogContent>
                 </Dialog>
             ) : (
-                children
+                <div className="space-y-6">
+                    <AdminNav />
+                    {children}
+                </div>
             )}
         </main>
     </div>
