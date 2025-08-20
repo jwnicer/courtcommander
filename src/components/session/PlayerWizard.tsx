@@ -263,7 +263,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   };
 
   const submitPayment = async () => {
-    if (!cfg) return;
+    if (!cfg || !clientId) return;
     setBusy('pay');
     setOptimistic('confirm');
 
@@ -271,17 +271,19 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     const paymentRef = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     try {
-      await createIntent(base, 'submit_payment', clientId!, {
-        amountCents: cfg?.amountCents,
-        currency: cfg?.currency,
+      await createIntent(base, 'submit_payment', clientId, {
+        amountCents: cfg.amountCents,
+        currency: cfg.currency,
         method: selectedEWallet,
-        paymentRef: paymentRef,
+        paymentRef,
       });
       toast({ title: 'Payment submitted', description: `Your reference code is ${paymentRef}. Please await confirmation.` });
     } catch (e: any) {
-      setOptimistic('pay');
+      setOptimistic('pay'); // Revert on failure
       toast({ title: 'Payment submission failed', description: e?.message ?? 'Please try again.', variant: 'destructive' });
-    } finally { setBusy(null); }
+    } finally { 
+        setBusy(null); 
+    }
   };
 
   const joinQueue = async () => { setBusy('enqueue'); try { await withTimeout(createIntent(base, 'enqueue', clientId!, {}), 10000); } catch(e) { console.error(e); } finally { setBusy(null); } };
