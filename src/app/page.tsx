@@ -42,34 +42,6 @@ export default function LandingPage() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button asChild variant="ghost" size="icon">
-                            <Link href="/qm">
-                                <ClipboardList />
-                                <span className="sr-only">Queue Master</span>
-                            </Link>
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Queue Master</p>
-                    </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button asChild variant="ghost" size="icon">
-                            <Link href="/admin">
-                                <Shield />
-                                <span className="sr-only">Admin Panel</span>
-                            </Link>
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Admin Panel</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
             <Button asChild size="lg" className="px-6 py-3 text-lg font-medium rounded-full">
                 <Link href="/play?action=join">
                 Join the Queue <ArrowRight className="ml-2 h-4 w-4" />
@@ -158,6 +130,37 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      
+      <TooltipProvider>
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button asChild variant="secondary" size="icon" className="rounded-full shadow-lg">
+                        <Link href="/qm">
+                            <ClipboardList />
+                            <span className="sr-only">Queue Master</span>
+                        </Link>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                    <p>Queue Master</p>
+                </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button asChild variant="secondary" size="icon" className="rounded-full shadow-lg">
+                        <Link href="/admin">
+                            <Shield />
+                            <span className="sr-only">Admin Panel</span>
+                        </Link>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                    <p>Admin Panel</p>
+                </TooltipContent>
+            </Tooltip>
+        </div>
+      </TooltipProvider>
     </div>
   );
 }

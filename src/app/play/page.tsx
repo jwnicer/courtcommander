@@ -66,34 +66,6 @@ function PlayPageContent() {
        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <Header>
             <div className="flex items-center gap-2">
-                <TooltipProvider>
-                     <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button asChild variant="ghost" size="icon">
-                                <Link href="/qm">
-                                    <ClipboardList />
-                                    <span className="sr-only">Queue Master</span>
-                                </Link>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Queue Master</p>
-                        </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button asChild variant="ghost" size="icon">
-                                <Link href="/admin">
-                                    <Shield />
-                                    <span className="sr-only">Admin Panel</span>
-                                </Link>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Admin Panel</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
                 {!me && (
                     <DialogTrigger asChild>
                         <Button>
@@ -133,6 +105,37 @@ function PlayPageContent() {
             <PlayerWizard orgId={orgId} venueId={venueId} sessionId={sessionId} onComplete={() => setDialogOpen(false)} />
         </DialogContent>
       </Dialog>
+      
+      <TooltipProvider>
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button asChild variant="secondary" size="icon" className="rounded-full shadow-lg">
+                        <Link href="/qm">
+                            <ClipboardList />
+                            <span className="sr-only">Queue Master</span>
+                        </Link>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                    <p>Queue Master</p>
+                </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button asChild variant="secondary" size="icon" className="rounded-full shadow-lg">
+                        <Link href="/admin">
+                            <Shield />
+                            <span className="sr-only">Admin Panel</span>
+                        </Link>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                    <p>Admin Panel</p>
+                </TooltipContent>
+            </Tooltip>
+        </div>
+      </TooltipProvider>
     </div>
   );
 }
