@@ -23,6 +23,11 @@ export default function AdminNav() {
       icon: ClipboardList,
     },
     {
+        href: "/qm",
+        label: "Queue Master",
+        icon: ClipboardList
+    },
+    {
       href: "/admin",
       label: "Dashboard",
       icon: Settings

@@ -1,3 +1,4 @@
+
 'use client';
 import { Header } from "@/components/layout/Header";
 import { Suspense, useEffect, useState } from 'react';
@@ -5,7 +6,7 @@ import { onSnapshot, doc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getClientId } from '@/lib/clientId';
 import LiveView from "@/components/session/LiveView";
-import { Shield, UserPlus } from "lucide-react";
+import { Shield, UserPlus, ClipboardList } from "lucide-react";
 import MatchSuggester from "@/components/ai/MatchSuggester";
 import PlayerWizard from "@/components/session/PlayerWizard";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,19 @@ function PlayPageContent() {
         <Header>
             <div className="flex items-center gap-2">
                 <TooltipProvider>
+                     <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button asChild variant="ghost" size="icon">
+                                <Link href="/qm">
+                                    <ClipboardList />
+                                    <span className="sr-only">Queue Master</span>
+                                </Link>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Queue Master</p>
+                        </TooltipContent>
+                    </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button asChild variant="ghost" size="icon">
