@@ -1,4 +1,3 @@
-
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
@@ -183,6 +182,9 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     if (step === 'queue' || step === 'in_match') {
         onComplete?.();
     }
+    if (step === 'terms') {
+      setTermsOpen(true);
+    }
   }, [step, onComplete]);
   
   const handleAction = async (action: () => Promise<any>) => {
@@ -204,7 +206,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   const handleRegistrationSubmit = () => handleAction(async () => {
       if (!clientId) throw new Error("Client ID not available.");
       await createIntent(base, 'register', clientId, { nickname, level, age });
-      // The useEffect for 'me' will pick up the change and move to the 'terms' step.
+      // The useEffect for 'me' will pick up the change and move to the 'terms' step, opening the dialog.
   });
 
   const handleAgreeToTerms = () => handleAction(async () => {
@@ -231,13 +233,6 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     toast({ title: "Copied!", description: "Account number copied to clipboard." });
   }
   
-  // Open terms dialog when user is created but hasn't agreed to terms
-  useEffect(() => {
-    if(me && !me.agreedToTerms) {
-      setTermsOpen(true);
-    }
-  }, [me]);
-
   const currentPaymentDetails = cfg?.eWallets?.[selectedEWallet];
 
   if (!clientId) {
@@ -410,5 +405,3 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     </>
   );
 }
-
-    
