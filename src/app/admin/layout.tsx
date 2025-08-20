@@ -4,14 +4,52 @@ import * as React from "react";
 import { Header } from "@/components/layout/Header";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Home, KeyRound, Loader2 } from "lucide-react";
+import { Home, KeyRound, Loader2, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { cn } from "@/lib/utils";
 
 const ADMIN_PIN = '1234'; // The secret PIN
+
+// Create a new, custom DialogContent component
+const CustomDialogContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { hideCloseButton?: boolean }
+>(({ className, children, hideCloseButton, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        className
+      )}
+      {...props}
+      onEscapeKeyDown={(e) => {
+        props.onEscapeKeyDown?.(e);
+        if (hideCloseButton) e.preventDefault();
+      }}
+       onPointerDownOutside={(e) => {
+        props.onPointerDownOutside?.(e);
+        if (hideCloseButton) e.preventDefault();
+      }}
+    >
+      {children}
+      {!hideCloseButton && (
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      )}
+    </DialogPrimitive.Content>
+  </DialogPortal>
+));
+CustomDialogContent.displayName = "CustomDialogContent";
+
 
 export default function AdminLayout({
   children,
@@ -81,7 +119,7 @@ export default function AdminLayout({
         <main className="flex-grow container mx-auto p-4 md:p-8">
             {!isAuthenticated ? (
                 <Dialog open={!isAuthenticated} onOpenChange={() => {}}>
-                    <DialogContent className="sm:max-w-md" hideCloseButton>
+                    <CustomDialogContent className="sm:max-w-md" hideCloseButton>
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2"><KeyRound /> Admin Access</DialogTitle>
                             <DialogDescription>
@@ -107,7 +145,7 @@ export default function AdminLayout({
                                 Unlock
                             </Button>
                         </DialogFooter>
-                    </DialogContent>
+                    </CustomDialogContent>
                 </Dialog>
             ) : (
                 children
@@ -116,49 +154,3 @@ export default function AdminLayout({
     </div>
   );
 }
-
-// Helper to add a prop to DialogContent to optionally hide the close button
-declare module "@radix-ui/react-dialog" {
-    interface DialogContentProps {
-        hideCloseButton?: boolean;
-    }
-}
-import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
-const OriginalDialogContent = DialogPrimitive.Content;
-// @ts-ignore
-DialogPrimitive.Content = React.forwardRef<
-  React.ElementRef<typeof OriginalDialogContent>,
-  React.ComponentPropsWithoutRef<typeof OriginalDialogContent> & { hideCloseButton?: boolean }
->(({ className, children, hideCloseButton, ...props }, ref) => (
-  <DialogPrimitive.Portal>
-    <DialogPrimitive.Overlay className={cn(
-      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
-    )} />
-    <OriginalDialogContent
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
-        className
-      )}
-      {...props}
-      onEscapeKeyDown={(e) => {
-        props.onEscapeKeyDown?.(e);
-        if (isAuthenticated) e.preventDefault(); // Prevent closing if authenticated
-      }}
-       onPointerDownOutside={(e) => {
-        props.onPointerDownOutside?.(e);
-        if (isAuthenticated) e.preventDefault(); // Prevent closing if authenticated
-      }}
-    >
-      {children}
-      {!hideCloseButton && (
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
-      )}
-    </OriginalDialogContent>
-  </DialogPrimitive.Portal>
-));
