@@ -93,27 +93,29 @@ const SkillAssessmentForm = ({ onComplete }: { onComplete: (level: Letter) => vo
     );
 };
 
-const TermsAndConditionsDialog = ({ onAgree }: { onAgree: () => void }) => {
+const TermsAndConditionsDialog = ({ onAgree, onOpenChange, open }: { onAgree: () => void; onOpenChange: (open: boolean) => void; open: boolean; }) => {
     return (
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle className="flex items-center gap-2"><FileText /> Terms & Conditions</DialogTitle>
-                <DialogDescription>Please read and agree to the terms before participating.</DialogDescription>
-            </DialogHeader>
-            <div className="prose prose-stone dark:prose-invert max-w-none space-y-4 text-sm max-h-[60vh] overflow-y-auto pr-4">
-                <p>By clicking "I Agree," you acknowledge you have read, understood, and agree to the full <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms & Conditions</Link>, including the following key points:</p>
-                <ul className="list-disc pl-5 space-y-2">
-                    <li><strong>Assumption of Risk:</strong> You voluntarily assume all risks associated with badminton, including injury.</li>
-                    <li><strong>Release of Liability:</strong> You release CourtCommander and its affiliates from any claims arising from your participation.</li>
-                    <li><strong>Code of Conduct:</strong> You agree to maintain a respectful and safe environment, with zero tolerance for profanity or harassment.</li>
-                    <li><strong>QM Authority:</strong> You agree that the Queue Master (QM) has final authority on all session-related matters.</li>
-                </ul>
-                <p>For the complete details, please review the <Link href="/terms" target="_blank" className="text-primary hover:underline">full Terms & Conditions page</Link>.</p>
-            </div>
-            <DialogFooter>
-                <Button onClick={onAgree}><CheckCircle className="mr-2"/> I Agree</Button>
-            </DialogFooter>
-        </DialogContent>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2"><FileText /> Terms & Conditions</DialogTitle>
+                    <DialogDescription>Please read and agree to the terms before participating.</DialogDescription>
+                </DialogHeader>
+                <div className="prose prose-stone dark:prose-invert max-w-none space-y-4 text-sm max-h-[60vh] overflow-y-auto pr-4">
+                    <p>By clicking "I Agree," you acknowledge you have read, understood, and agree to the full <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms & Conditions</Link>, including the following key points:</p>
+                    <ul className="list-disc pl-5 space-y-2">
+                        <li><strong>Assumption of Risk:</strong> You voluntarily assume all risks associated with badminton, including injury.</li>
+                        <li><strong>Release of Liability:</strong> You release CourtCommander and its affiliates from any claims arising from your participation.</li>
+                        <li><strong>Code of Conduct:</strong> You agree to maintain a respectful and safe environment, with zero tolerance for profanity or harassment.</li>
+                        <li><strong>QM Authority:</strong> You agree that the Queue Master (QM) has final authority on all session-related matters.</li>
+                    </ul>
+                    <p>For the complete details, please review the <Link href="/terms" target="_blank" className="text-primary hover:underline">full Terms & Conditions page</Link>.</p>
+                </div>
+                <DialogFooter>
+                    <Button onClick={onAgree}><CheckCircle className="mr-2"/> I Agree</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     )
 }
 
@@ -194,10 +196,18 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     }
   };
 
-  const handleRegistrationSubmit = () => handleAction(async () => {
-    await createIntent(base, 'register', clientId!, { nickname, level, age });
-    setTermsOpen(true);
-  });
+  const handleRegistrationSubmit = async () => {
+    setLoading(true);
+    try {
+      if (!clientId) throw new Error("Client ID not available.");
+      await createIntent(base, 'register', clientId, { nickname, level, age });
+      setTermsOpen(true);
+    } catch (e) {
+      console.error("Registration failed", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAgreeToTerms = () => handleAction(async () => {
     await createIntent(base, 'agree_to_terms', clientId!, {});
@@ -251,151 +261,146 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   return (
     <>
         <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
-            <Card className="w-full border-none shadow-none rounded-t-lg">
-            <div className="p-6">
-                {renderHeader()}
-            </div>
-            
-            {step === 'register' && (
-                <>
-                <CardContent className="space-y-4 pt-0 px-6">
-                    <div>
-                        <Label htmlFor='nickname'>Nickname</Label>
-                        <Input id='nickname' placeholder="e.g., ShuttleSmasher" value={nickname} onChange={e => setNick(e.target.value)} />
+            <SkillAssessmentForm onComplete={handleAssessmentComplete} />
+        </Dialog>
+        <TermsAndConditionsDialog open={termsOpen} onOpenChange={setTermsOpen} onAgree={handleAgreeToTerms} />
+
+        <Card className="w-full border-none shadow-none rounded-t-lg">
+        <div className="p-6">
+            {renderHeader()}
+        </div>
+        
+        {step === 'register' && (
+            <>
+            <CardContent className="space-y-4 pt-0 px-6">
+                <div>
+                    <Label htmlFor='nickname'>Nickname</Label>
+                    <Input id='nickname' placeholder="e.g., ShuttleSmasher" value={nickname} onChange={e => setNick(e.target.value)} />
+                </div>
+                <div>
+                    <div className="flex justify-between items-center mb-1">
+                        <Label>Skill Level</Label>
+                        <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setAssessmentOpen(true)}>Don't know your level? Take a test.</Button>
                     </div>
-                    <div>
-                        <div className="flex justify-between items-center mb-1">
-                            <Label>Skill Level</Label>
-                             <DialogTrigger asChild>
-                                <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setAssessmentOpen(true)}>Don't know your level? Take a test.</Button>
-                            </DialogTrigger>
-                        </div>
-                        <Select onValueChange={(v) => setLevel(Number(v))} value={String(level)}>
-                            <SelectTrigger><SelectValue placeholder="Select your skill level" /></SelectTrigger>
+                    <Select onValueChange={(v) => setLevel(Number(v))} value={String(level)}>
+                        <SelectTrigger><SelectValue placeholder="Select your skill level" /></SelectTrigger>
+                        <SelectContent>
+                            {Object.entries(skillLevels).map(([grade, value]) => 
+                                <SelectItem key={grade} value={String(value)}>Level {grade}</SelectItem>
+                            )}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <Label htmlFor='age'>Age</Label>
+                    <Input id='age' type="number" min={8} max={99} value={age} onChange={e => setAge(Number(e.target.value))} />
+                </div>
+            </CardContent>
+            <CardFooter className="px-6 pb-6">
+                <Button className="w-full" onClick={handleRegistrationSubmit} disabled={loading || !nickname}>
+                    {loading ? <Loader2 className="animate-spin" /> : <UserPlus />} Save & Continue
+                </Button>
+            </CardFooter>
+            </>
+        )}
+
+        {step === 'terms' && (
+            <CardContent className="px-6 pb-6 text-center">
+                 <p className='text-muted-foreground mb-4'>You must agree to the terms to continue.</p>
+                 <Button onClick={() => setTermsOpen(true)}>View Terms & Conditions</Button>
+            </CardContent>
+        )}
+
+        {step === 'pay' && (
+            <>
+            <CardContent className="space-y-4 pt-0 px-6">
+                {!cfg ? <Loader2 className="mx-auto animate-spin" /> : (
+                    <div className='space-y-4'>
+                        <Alert>
+                            <AlertTitle>Payment Required</AlertTitle>
+                            <AlertDescription>
+                            Please pay <span className="font-semibold">${((cfg.amountCents || 0) / 100).toFixed(2)} {cfg.currency}</span> to join the session.
+                            </AlertDescription>
+                        </Alert>
+                         <Select onValueChange={(v: EWallet) => setSelectedEWallet(v)} defaultValue={selectedEWallet}>
+                            <SelectTrigger><SelectValue placeholder="Select e-wallet" /></SelectTrigger>
                             <SelectContent>
-                                {Object.entries(skillLevels).map(([grade, value]) => 
-                                    <SelectItem key={grade} value={String(value)}>Level {grade}</SelectItem>
-                                )}
+                                <SelectItem value="gcash">Gcash</SelectItem>
+                                <SelectItem value="maya">Maya</SelectItem>
+                                <SelectItem value="gotym">GoTym</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
-                    <div>
-                        <Label htmlFor='age'>Age</Label>
-                        <Input id='age' type="number" min={8} max={99} value={age} onChange={e => setAge(Number(e.target.value))} />
-                    </div>
-                </CardContent>
-                <CardFooter className="px-6 pb-6">
-                    <Button className="w-full" onClick={handleRegistrationSubmit} disabled={loading || !nickname}>
-                        {loading ? <Loader2 className="animate-spin" /> : <UserPlus />} Save & Continue
-                    </Button>
-                </CardFooter>
-                </>
-            )}
 
-            {step === 'terms' && (
-                <CardContent className="px-6 pb-6">
-                    <TermsAndConditionsDialog onAgree={handleAgreeToTerms} />
-                </CardContent>
-            )}
-
-            {step === 'pay' && (
-                <>
-                <CardContent className="space-y-4 pt-0 px-6">
-                    {!cfg ? <Loader2 className="mx-auto animate-spin" /> : (
-                        <div className='space-y-4'>
-                            <Alert>
-                                <AlertTitle>Payment Required</AlertTitle>
-                                <AlertDescription>
-                                Please pay <span className="font-semibold">${((cfg.amountCents || 0) / 100).toFixed(2)} {cfg.currency}</span> to join the session.
-                                </AlertDescription>
-                            </Alert>
-                             <Select onValueChange={(v: EWallet) => setSelectedEWallet(v)} defaultValue={selectedEWallet}>
-                                <SelectTrigger><SelectValue placeholder="Select e-wallet" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="gcash">Gcash</SelectItem>
-                                    <SelectItem value="maya">Maya</SelectItem>
-                                    <SelectItem value="gotym">GoTym</SelectItem>
-                                </SelectContent>
-                            </Select>
-
-                            {currentPaymentDetails && (
-                                <div className="p-4 bg-muted rounded-lg text-center space-y-3">
-                                     {currentPaymentDetails.qrUrl && <img src={currentPaymentDetails.qrUrl} data-ai-hint="qr code" className="rounded-lg shadow-sm mx-auto max-w-[200px]" alt={`${selectedEWallet} QR Code`} />}
-                                     <p className='text-sm text-muted-foreground'>Or send to:</p>
-                                    <div className="flex items-center justify-center gap-2">
-                                        <code className="px-2 py-1 bg-background rounded-md text-primary font-mono">{currentPaymentDetails.accountNumber}</code>
-                                        <Button variant="outline" size="sm" onClick={() => copyToClipboard(currentPaymentDetails.accountNumber)}>Copy</Button>
-                                    </div>
+                        {currentPaymentDetails && (
+                            <div className="p-4 bg-muted rounded-lg text-center space-y-3">
+                                 {currentPaymentDetails.qrUrl && <img src={currentPaymentDetails.qrUrl} data-ai-hint="qr code" className="rounded-lg shadow-sm mx-auto max-w-[200px]" alt={`${selectedEWallet} QR Code`} />}
+                                 <p className='text-sm text-muted-foreground'>Or send to:</p>
+                                <div className="flex items-center justify-center gap-2">
+                                    <code className="px-2 py-1 bg-background rounded-md text-primary font-mono">{currentPaymentDetails.accountNumber}</code>
+                                    <Button variant="outline" size="sm" onClick={() => copyToClipboard(currentPaymentDetails.accountNumber)}>Copy</Button>
                                 </div>
-                            )}
-                        </div>
-                    )}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </CardContent>
+            <CardFooter className="px-6 pb-6">
+                <Button className="w-full" onClick={submitPayment} disabled={loading || !cfg || !currentPaymentDetails}>
+                    {loading ? <Loader2 className="animate-spin" /> : <CreditCard />} I Paid – Submit for Confirmation
+                </Button>
+            </CardFooter>
+            </>
+        )}
+
+        {step === 'confirm' && (
+            <>
+                <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
+                    <Clock className="h-12 w-12 text-primary mx-auto mb-4" />
+                    <h2 className="text-xl font-semibold">Confirmation Pending</h2>
+                    <p className="text-muted-foreground">An admin will approve your payment of <span className='font-semibold'>${((cfg?.amountCents || 0) / 100).toFixed(2)}</span> shortly.</p>
+                    <p className="text-sm mt-2">Your reference: <code className='font-mono bg-muted px-1 py-0.5 rounded'>{me.paymentRef}</code></p>
                 </CardContent>
-                <CardFooter className="px-6 pb-6">
-                    <Button className="w-full" onClick={submitPayment} disabled={loading || !cfg || !currentPaymentDetails}>
-                        {loading ? <Loader2 className="animate-spin" /> : <CreditCard />} I Paid – Submit for Confirmation
+            </>
+        )}
+
+        {step === 'queue' && (
+            <>
+                <CardContent className="pt-0 px-6 pb-6">
+                {!queueEntry ? (
+                    <Button className="w-full" onClick={joinQueue} disabled={loading}>
+                        {loading ? <Loader2 className="animate-spin" /> : <ListPlus />}
+                        Join Queue
                     </Button>
-                </CardFooter>
-                </>
-            )}
-
-            {step === 'confirm' && (
-                <>
-                    <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
-                        <Clock className="h-12 w-12 text-primary mx-auto mb-4" />
-                        <h2 className="text-xl font-semibold">Confirmation Pending</h2>
-                        <p className="text-muted-foreground">An admin will approve your payment of <span className='font-semibold'>${((cfg?.amountCents || 0) / 100).toFixed(2)}</span> shortly.</p>
-                        <p className="text-sm mt-2">Your reference: <code className='font-mono bg-muted px-1 py-0.5 rounded'>{me.paymentRef}</code></p>
-                    </CardContent>
-                </>
-            )}
-
-            {step === 'queue' && (
-                <>
-                    <CardContent className="pt-0 px-6 pb-6">
-                    {!queueEntry ? (
-                        <Button className="w-full" onClick={joinQueue} disabled={loading}>
-                            {loading ? <Loader2 className="animate-spin" /> : <ListPlus />}
-                            Join Queue
-                        </Button>
-                    ) : (
-                        <Alert variant={queueEntry.status === 'waiting' ? 'default' : 'destructive'}>
-                            <AlertTitle>You're in the Queue!</AlertTitle>
-                            <AlertDescription>Your position will be updated automatically. You'll be notified when your match starts.</AlertDescription>
-                        </Alert>
-                    )}
-                    {queueEntry?.status === 'waiting' && (
-                        <Button variant="destructive" className="w-full mt-4" onClick={leaveQueue} disabled={loading}>
-                            {loading ? <Loader2 className="animate-spin" /> : <ListX />} Leave Queue
-                        </Button>
-                    )}
-                    </CardContent>
-                </>
-            )}
-            
-            {step === 'in_match' && (
-                <>
-                    <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
-                        <Swords className="h-12 w-12 text-destructive mx-auto mb-4" />
-                        <h2 className="text-xl font-semibold">Good Luck!</h2>
-                        <p className="text-muted-foreground">Once your game is finished, tap the button below.</p>
-                        <Button className="w-full mt-6" onClick={requeue} disabled={loading}>
-                            {loading ? <Loader2 className="animate-spin" /> : <Repeat />} Match Over – Rejoin Queue
-                        </Button>
-                    </CardContent>
-                </>
-            )}
-            </Card>
-            
-            <DialogContent>
-                <SkillAssessmentForm onComplete={handleAssessmentComplete} />
-            </DialogContent>
-        </Dialog>
-
-        <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
-            <TermsAndConditionsDialog onAgree={handleAgreeToTerms} />
-        </Dialog>
-
+                ) : (
+                    <Alert variant={queueEntry.status === 'waiting' ? 'default' : 'destructive'}>
+                        <AlertTitle>You're in the Queue!</AlertTitle>
+                        <AlertDescription>Your position will be updated automatically. You'll be notified when your match starts.</AlertDescription>
+                    </Alert>
+                )}
+                {queueEntry?.status === 'waiting' && (
+                    <Button variant="destructive" className="w-full mt-4" onClick={leaveQueue} disabled={loading}>
+                        {loading ? <Loader2 className="animate-spin" /> : <ListX />} Leave Queue
+                    </Button>
+                )}
+                </CardContent>
+            </>
+        )}
+        
+        {step === 'in_match' && (
+            <>
+                <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
+                    <Swords className="h-12 w-12 text-destructive mx-auto mb-4" />
+                    <h2 className="text-xl font-semibold">Good Luck!</h2>
+                    <p className="text-muted-foreground">Once your game is finished, tap the button below.</p>
+                    <Button className="w-full mt-6" onClick={requeue} disabled={loading}>
+                        {loading ? <Loader2 className="animate-spin" /> : <Repeat />} Match Over – Rejoin Queue
+                    </Button>
+                </CardContent>
+            </>
+        )}
+        </Card>
     </>
   );
 }
+
+    
