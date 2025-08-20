@@ -232,7 +232,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   const handleAgreeToTerms = async () => {
     setBusy('agree');
     try {
-      await withTimeout(createIntent(base, 'agree_to_terms', clientId!, {}), 10000);
+      await withTimeout(createIntent(base, 'agree_to_terms', clientId!, {}), 120000);
       setTermsOpen(false);
       setOptimistic('pay');
       toast({ title: 'Thanks!', description: 'Terms accepted. Proceed to payment.' });
