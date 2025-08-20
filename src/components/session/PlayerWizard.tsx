@@ -482,5 +482,3 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     </>
   );
 }
-
-    
