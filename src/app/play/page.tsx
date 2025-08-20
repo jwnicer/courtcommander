@@ -6,9 +6,7 @@ import { onSnapshot, doc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getClientId } from '@/lib/clientId';
 import LiveView from "@/components/session/LiveView";
-import AdminPanel from "@/components/session/AdminPanel";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Shield, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import MatchSuggester from "@/components/ai/MatchSuggester";
 import PlayerWizard from "@/components/session/PlayerWizard";
 import { Button } from "@/components/ui/button";
@@ -33,7 +31,6 @@ function PlayPageContent() {
   const searchParams = useSearchParams();
 
   const canCoach = me?.roles?.includes('coach');
-  const isAdmin = me?.roles?.includes('admin');
   const gameType = session?.gameType || 'doubles';
   const myLevel = me?.level || 3;
 
@@ -76,44 +73,26 @@ function PlayPageContent() {
             )}
         </Header>
         <main className="flex-grow container mx-auto p-4 md:p-8">
-            <Tabs defaultValue="player" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="player"><User className="mr-2"/>Player View</TabsTrigger>
-                <TabsTrigger value="admin" disabled={!isAdmin}><Shield className="mr-2"/>Admin View</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="player">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1">
-                    <MatchSuggester 
-                        playerLevel={myLevel} 
-                        availablePlayers={waitingQueue}
-                        gameType={gameType}
-                    />
-                </div>
-                <div className="lg:col-span-2">
-                    <LiveView
-                        basePath={basePath}
-                        canCoach={canCoach}
-                        courts={courts}
-                        matches={matches}
-                        participants={participants}
-                        waitingQueue={waitingQueue}
-                        gameType={gameType}
-                    />
-                </div>
-                </div>
-            </TabsContent>
-
-            <TabsContent value="admin">
-                <AdminPanel 
-                session={session}
-                participants={participants}
-                courts={courts}
-                basePath={basePath}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+                <MatchSuggester 
+                    playerLevel={myLevel} 
+                    availablePlayers={waitingQueue}
+                    gameType={gameType}
                 />
-            </TabsContent>
-            </Tabs>
+            </div>
+            <div className="lg:col-span-2">
+                <LiveView
+                    basePath={basePath}
+                    canCoach={canCoach}
+                    courts={courts}
+                    matches={matches}
+                    participants={participants}
+                    waitingQueue={waitingQueue}
+                    gameType={gameType}
+                />
+            </div>
+            </div>
         </main>
         <DialogContent className="p-0">
             <DialogHeader className="p-6 pb-0">
