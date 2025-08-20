@@ -24,10 +24,10 @@ function PlayPageContent() {
   const basePath = `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}`;
   const clientId = getClientId();
 
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<any>(null);
   const [courts, setCourts] = useState([]);
   const [matches, setMatches] = useState([]);
-  const [participants, setParticipants] = useState([]);
+  const [participants, setParticipants] = useState<any[]>([]);
   const [waitingQueue, setWaitingQueue] = useState([]);
   const [me, setMe] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -58,25 +58,23 @@ function PlayPageContent() {
 
   useEffect(() => {
     const action = searchParams.get('action');
-    // If user is not registered, open the dialog
-    if (participants.length > 0 && !me) {
-      setDialogOpen(true);
-    }
     if (action === 'join' && !me) {
       setDialogOpen(true);
     }
-  }, [me, participants, searchParams]);
+  }, [me, searchParams]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <Header>
-            <DialogTrigger asChild>
-                <Button>
-                    <UserPlus />
-                    Join Session
-                </Button>
-            </DialogTrigger>
+            {!me && (
+                <DialogTrigger asChild>
+                    <Button>
+                        <UserPlus />
+                        Join Session
+                    </Button>
+                </DialogTrigger>
+            )}
         </Header>
         <main className="flex-grow container mx-auto p-4 md:p-8">
             <Tabs defaultValue="player" className="w-full">
@@ -113,14 +111,12 @@ function PlayPageContent() {
                 session={session}
                 participants={participants}
                 courts={courts}
+                basePath={basePath}
                 />
             </TabsContent>
             </Tabs>
         </main>
         <DialogContent className="p-0">
-          <DialogHeader>
-            <DialogTitle>Join Session</DialogTitle>
-          </DialogHeader>
           <PlayerWizard orgId={orgId} venueId={venueId} sessionId={sessionId} onComplete={() => setDialogOpen(false)} />
         </DialogContent>
       </Dialog>

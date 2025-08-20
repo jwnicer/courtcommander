@@ -16,8 +16,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '../ui/scroll-area';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 type Step = 'register' | 'terms' | 'pay' | 'confirm' | 'queue' | 'in_match';
+type EWallet = 'gcash' | 'maya' | 'gotym';
 
 interface PlayerWizardProps {
     orgId: string;
@@ -98,7 +100,7 @@ const TermsAndConditionsDialog = ({ onAgree }: { onAgree: () => void }) => {
                 <DialogTitle className="flex items-center gap-2"><FileText /> Terms & Conditions</DialogTitle>
                 <DialogDescription>Please read and agree to the terms before participating.</DialogDescription>
             </DialogHeader>
-            <div className="prose prose-stone dark:prose-invert max-w-none space-y-4 text-sm">
+            <div className="prose prose-stone dark:prose-invert max-w-none space-y-4 text-sm max-h-[60vh] overflow-y-auto pr-4">
                 <p>By clicking "I Agree," you acknowledge you have read, understood, and agree to the full <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms & Conditions</Link>, including the following key points:</p>
                 <ul className="list-disc pl-5 space-y-2">
                     <li><strong>Assumption of Risk:</strong> You voluntarily assume all risks associated with badminton, including injury.</li>
@@ -129,6 +131,9 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   const [loading, setLoading] = useState(false);
   const [assessmentOpen, setAssessmentOpen] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
+  const [selectedEWallet, setSelectedEWallet] = useState<EWallet>('gcash');
+  const { toast } = useToast();
+
 
   const base = `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}`;
 
@@ -149,19 +154,15 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
   useEffect(() => {
     if (!orgId || !venueId || !sessionId) return;
     
-    const venueBase = `orgs/${orgId}/venues/${venueId}`;
-    const sessionBase = `${venueBase}/sessions/${sessionId}`;
-    
-    const sessionPayDoc = doc(db, `${sessionBase}/settings/payment`);
-    const venuePayDoc = doc(db, `${venueBase}/settings/payment`);
+    const sessionPayDoc = doc(db, `orgs/${orgId}/venues/${venueId}/sessions/${sessionId}/settings/payment`);
 
-    const unsub = onSnapshot(sessionPayDoc, async (s) => {
-      if (s.exists()) {
-        setCfg(s.data());
-      } else {
-        const v = await getDoc(venuePayDoc);
-        setCfg(v.exists() ? v.data() : null);
-      }
+    const unsub = onSnapshot(sessionPayDoc, (s) => {
+        if (s.exists()) {
+            setCfg(s.data());
+        } else {
+            // Fallback or default config if session-specific one doesn't exist
+            setCfg({ amountCents: 1000, currency: 'PHP' }); // Example default
+        }
     });
     return () => unsub();
 
@@ -193,17 +194,21 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     }
   };
 
-  const handleRegistrationSubmit = () => {
-      setTermsOpen(true);
-  }
+  const handleRegistrationSubmit = () => handleAction(async () => {
+    await createIntent(base, 'register', clientId!, { nickname, level, age });
+    setTermsOpen(true);
+  });
 
-  const doRegisterAndQueue = () => handleAction(async () => {
-    await createIntent(base, 'register', clientId!, { nickname, level, age, agreedToTerms: true, paid: true });
-    await createIntent(base, 'enqueue', clientId!, {});
+  const handleAgreeToTerms = () => handleAction(async () => {
+    await createIntent(base, 'agree_to_terms', clientId!, {});
     setTermsOpen(false);
   });
 
-  const submitPayment = () => handleAction(() => createIntent(base, 'submit_payment', clientId!, { amountCents: cfg?.amountCents, currency: cfg?.currency }));
+  const submitPayment = () => handleAction(() => createIntent(base, 'submit_payment', clientId!, {
+     amountCents: cfg?.amountCents,
+     currency: cfg?.currency,
+     method: selectedEWallet 
+    }));
   const joinQueue = () => handleAction(() => createIntent(base, 'enqueue', clientId!, {}));
   const leaveQueue = () => handleAction(() => createIntent(base, 'leave_queue', clientId!, {}));
   const requeue = () => handleAction(() => createIntent(base, 'requeue_after_match', clientId!, {}));
@@ -212,6 +217,13 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     setLevel(skillLevels[calculatedLevel]);
     setAssessmentOpen(false);
   };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied!", description: "Account number copied to clipboard." });
+  }
+
+  const currentPaymentDetails = cfg?.eWallets?.[selectedEWallet];
 
   if (!clientId) {
     return <Card className="w-full border-none shadow-none"><CardHeader><CardTitle>Loading...</CardTitle></CardHeader></Card>
@@ -222,14 +234,15 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
       case 'register':
         return <DialogHeader><DialogTitle className="flex items-center gap-2"><UserPlus /> Register for Session</DialogTitle><DialogDescription>Enter your details to join the open play session.</DialogDescription></DialogHeader>;
       case 'terms':
+        return <DialogHeader><DialogTitle className="flex items-center gap-2"><FileText /> Terms & Conditions</DialogTitle><DialogDescription>Please read and agree to the terms before participating.</DialogDescription></DialogHeader>;
       case 'pay':
-        return <DialogHeader><DialogTitle className="flex items-center gap-2"><CreditCard /> Complete Your Payment</DialogTitle><DialogDescription>Use the details below to pay, then enter the reference number.</DialogDescription></DialogHeader>;
+        return <DialogHeader><DialogTitle className="flex items-center gap-2"><CreditCard /> Complete Your Payment</DialogTitle><DialogDescription>Select an e-wallet, pay the fee, then submit for confirmation.</DialogDescription></DialogHeader>;
       case 'confirm':
-        return <DialogHeader><DialogTitle>Waiting for Confirmation</DialogTitle></DialogHeader>;
+        return <DialogHeader><DialogTitle className="flex items-center gap-2"><Clock /> Waiting for Confirmation</DialogTitle><DialogDescription>An admin will verify your payment shortly.</DialogDescription></DialogHeader>;
       case 'queue':
-        return <DialogHeader><DialogTitle>You're All Set!</DialogTitle><DialogDescription>You are paid and ready to play.</DialogDescription></DialogHeader>;
+        return <DialogHeader><DialogTitle className="flex items-center gap-2"><CheckCircle /> You're All Set!</DialogTitle><DialogDescription>You are paid and ready to play.</DialogDescription></DialogHeader>;
       case 'in_match':
-        return <DialogHeader><DialogTitle>Match in Progress</DialogTitle></DialogHeader>;
+        return <DialogHeader><DialogTitle className="flex items-center gap-2"><Swords /> Match in Progress</DialogTitle><DialogDescription>Good luck! Re-queue when you're done.</DialogDescription></DialogHeader>;
       default:
         return null;
     }
@@ -237,7 +250,6 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
   return (
     <>
-      <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
         <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
             <Card className="w-full border-none shadow-none rounded-t-lg">
             <div className="p-6">
@@ -246,15 +258,15 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
             
             {step === 'register' && (
                 <>
-                <CardContent className="space-y-4 pt-0">
+                <CardContent className="space-y-4 pt-0 px-6">
                     <div>
-                        <label className="text-sm font-medium">Nickname</label>
-                        <Input placeholder="e.g., ShuttleSmasher" value={nickname} onChange={e => setNick(e.target.value)} />
+                        <Label htmlFor='nickname'>Nickname</Label>
+                        <Input id='nickname' placeholder="e.g., ShuttleSmasher" value={nickname} onChange={e => setNick(e.target.value)} />
                     </div>
                     <div>
                         <div className="flex justify-between items-center mb-1">
-                            <label className="text-sm font-medium">Skill Level</label>
-                            <DialogTrigger asChild>
+                            <Label>Skill Level</Label>
+                             <DialogTrigger asChild>
                                 <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setAssessmentOpen(true)}>Don't know your level? Take a test.</Button>
                             </DialogTrigger>
                         </div>
@@ -268,11 +280,11 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
                         </Select>
                     </div>
                     <div>
-                        <label className="text-sm font-medium">Age</label>
-                        <Input type="number" min={8} max={99} value={age} onChange={e => setAge(Number(e.target.value))} />
+                        <Label htmlFor='age'>Age</Label>
+                        <Input id='age' type="number" min={8} max={99} value={age} onChange={e => setAge(Number(e.target.value))} />
                     </div>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="px-6 pb-6">
                     <Button className="w-full" onClick={handleRegistrationSubmit} disabled={loading || !nickname}>
                         {loading ? <Loader2 className="animate-spin" /> : <UserPlus />} Save & Continue
                     </Button>
@@ -280,27 +292,47 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
                 </>
             )}
 
-            {(step === 'terms' || step === 'pay') && (
+            {step === 'terms' && (
+                <CardContent className="px-6 pb-6">
+                    <TermsAndConditionsDialog onAgree={handleAgreeToTerms} />
+                </CardContent>
+            )}
+
+            {step === 'pay' && (
                 <>
-                <CardContent className="space-y-4 pt-0">
+                <CardContent className="space-y-4 pt-0 px-6">
                     {!cfg ? <Loader2 className="mx-auto animate-spin" /> : (
-                        <>
+                        <div className='space-y-4'>
                             <Alert>
-                                <AlertTitle>Payment Details</AlertTitle>
-                                <AlertDescription className="space-y-2">
-                                <p>Pay <span className="font-semibold">${((cfg.amountCents || 0) / 100).toFixed(2)}</span> via {cfg.accountLabel}</p>
-                                    <div className="flex items-center gap-2">
-                                        <code className="px-2 py-1 bg-background rounded-md text-primary font-mono">{cfg.accountNumber}</code>
-                                        <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(cfg.accountNumber)}>Copy</Button>
-                                    </div>
-                                    {cfg.qrUrl && <img src={cfg.qrUrl} data-ai-hint="qr code" className="rounded-lg shadow-sm mx-auto max-w-[200px]" alt="Payment QR Code" />}
+                                <AlertTitle>Payment Required</AlertTitle>
+                                <AlertDescription>
+                                Please pay <span className="font-semibold">${((cfg.amountCents || 0) / 100).toFixed(2)} {cfg.currency}</span> to join the session.
                                 </AlertDescription>
                             </Alert>
-                        </>
+                             <Select onValueChange={(v: EWallet) => setSelectedEWallet(v)} defaultValue={selectedEWallet}>
+                                <SelectTrigger><SelectValue placeholder="Select e-wallet" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="gcash">Gcash</SelectItem>
+                                    <SelectItem value="maya">Maya</SelectItem>
+                                    <SelectItem value="gotym">GoTym</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            {currentPaymentDetails && (
+                                <div className="p-4 bg-muted rounded-lg text-center space-y-3">
+                                     {currentPaymentDetails.qrUrl && <img src={currentPaymentDetails.qrUrl} data-ai-hint="qr code" className="rounded-lg shadow-sm mx-auto max-w-[200px]" alt={`${selectedEWallet} QR Code`} />}
+                                     <p className='text-sm text-muted-foreground'>Or send to:</p>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <code className="px-2 py-1 bg-background rounded-md text-primary font-mono">{currentPaymentDetails.accountNumber}</code>
+                                        <Button variant="outline" size="sm" onClick={() => copyToClipboard(currentPaymentDetails.accountNumber)}>Copy</Button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     )}
                 </CardContent>
-                <CardFooter>
-                    <Button className="w-full" onClick={submitPayment} disabled={loading || !cfg}>
+                <CardFooter className="px-6 pb-6">
+                    <Button className="w-full" onClick={submitPayment} disabled={loading || !cfg || !currentPaymentDetails}>
                         {loading ? <Loader2 className="animate-spin" /> : <CreditCard />} I Paid – Submit for Confirmation
                     </Button>
                 </CardFooter>
@@ -312,7 +344,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
                     <CardContent className="text-center p-8 flex flex-col items-center justify-center min-h-[200px]">
                         <Clock className="h-12 w-12 text-primary mx-auto mb-4" />
                         <h2 className="text-xl font-semibold">Confirmation Pending</h2>
-                        <p className="text-muted-foreground">A coach will approve your payment of <span className='font-semibold'>${((cfg?.amountCents || 0) / 100).toFixed(2)}</span> shortly.</p>
+                        <p className="text-muted-foreground">An admin will approve your payment of <span className='font-semibold'>${((cfg?.amountCents || 0) / 100).toFixed(2)}</span> shortly.</p>
                         <p className="text-sm mt-2">Your reference: <code className='font-mono bg-muted px-1 py-0.5 rounded'>{me.paymentRef}</code></p>
                     </CardContent>
                 </>
@@ -320,7 +352,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
             {step === 'queue' && (
                 <>
-                    <CardContent className="pt-0">
+                    <CardContent className="pt-0 px-6 pb-6">
                     {!queueEntry ? (
                         <Button className="w-full" onClick={joinQueue} disabled={loading}>
                             {loading ? <Loader2 className="animate-spin" /> : <ListPlus />}
@@ -332,14 +364,12 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
                             <AlertDescription>Your position will be updated automatically. You'll be notified when your match starts.</AlertDescription>
                         </Alert>
                     )}
-                    </CardContent>
                     {queueEntry?.status === 'waiting' && (
-                    <CardFooter>
-                        <Button variant="destructive" className="w-full" onClick={leaveQueue} disabled={loading}>
+                        <Button variant="destructive" className="w-full mt-4" onClick={leaveQueue} disabled={loading}>
                             {loading ? <Loader2 className="animate-spin" /> : <ListX />} Leave Queue
                         </Button>
-                    </CardFooter>
                     )}
+                    </CardContent>
                 </>
             )}
             
@@ -357,22 +387,15 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
             )}
             </Card>
             
-            <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
+            <DialogContent>
                 <SkillAssessmentForm onComplete={handleAssessmentComplete} />
-            </Dialog>
-
+            </DialogContent>
         </Dialog>
 
         <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
-            <TermsAndConditionsDialog onAgree={doRegisterAndQueue} />
+            <TermsAndConditionsDialog onAgree={handleAgreeToTerms} />
         </Dialog>
-      </Dialog>
 
     </>
   );
 }
-
-    
-    
-
-    
