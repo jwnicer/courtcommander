@@ -1,3 +1,4 @@
+
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -26,10 +27,10 @@ import { Skeleton } from '../ui/skeleton';
 // 3) Added withTimeout() to prevent infinite pending promises; clear busy on timeout.
 // 4) Guarded against double-submit via ref and disabled states.
 // 5) Kept smooth transitions, auto-open Terms, and robust toasts.
+// 6) Handled non-existent payment config to prevent infinite loading.
 // ————————————————————————————————————————————————————————————————
 
 type Step = 'register' | 'terms' | 'pay' | 'confirm' | 'queue' | 'in_match';
-type EWallet = 'gcash' | 'maya' | 'gotym';
 
 type BusyKind = null | 'register' | 'agree' | 'pay' | 'enqueue' | 'leave' | 'requeue';
 
@@ -177,6 +178,9 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
       if (s.exists()) {
         const data = s.data() as PaymentCfg;
         setCfg(data);
+      } else {
+        // If no payment config exists, assume it's free.
+        setCfg({ amountCents: 0, currency: 'PHP', eWallets: {} });
       }
     });
     return () => unsub();
@@ -184,7 +188,7 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
   // Compute step from server state
   const remoteStep: Step | 'loading' = useMemo(() => {
-    if (!clientId || me === undefined) return 'loading';
+    if (!clientId || me === undefined || cfg === null) return 'loading';
     if (!me) return 'register';
     if (!me.agreedToTerms) return 'terms';
     if ((cfg?.amountCents || 0) > 0 && !me.paid) return me.paymentRef ? 'confirm' : 'pay';
@@ -238,12 +242,14 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
 
   const handleAgreeToTerms = async () => {
     setBusy('agree');
-    setOptimistic('pay'); // Optimistically move to payment
+    // If free, skip to queue, otherwise go to payment.
+    const nextStep = (cfg?.amountCents || 0) > 0 ? 'pay' : 'queue';
+    setOptimistic(nextStep);
     setTermsOpen(false); // Close dialog immediately
 
     try {
       await withTimeout(createIntent(base, 'agree_to_terms', clientId!, {}), 120000);
-      toast({ title: 'Thanks!', description: 'Terms accepted. Proceed to payment.' });
+      toast({ title: 'Thanks!', description: 'Terms accepted.' });
     } catch (e: any) {
       setOptimistic('terms'); // Revert on failure
       setTermsOpen(true);
@@ -517,3 +523,5 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     </>
   );
 }
+
+    

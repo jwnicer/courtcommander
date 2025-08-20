@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, CreditCard, Trash2, PlusCircle, Save } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 interface EWallet {
   accountNumber: string;
@@ -34,7 +35,7 @@ const initialConfig: PaymentConfig = {
 };
 
 export default function PaymentSettings({ basePath }: PaymentSettingsProps) {
-  const [config, setConfig] = useState<PaymentConfig>(initialConfig);
+  const [config, setConfig] = useState<PaymentConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [newWalletName, setNewWalletName] = useState('');
@@ -130,6 +131,10 @@ export default function PaymentSettings({ basePath }: PaymentSettingsProps) {
           <CardDescription>Configure session fee and accepted e-wallets. These settings are shown to players upon joining.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <Alert variant="default">
+             <AlertTitle>Note</AlertTitle>
+             <AlertDescription>If no payment settings are saved or the entry fee is set to 0, the session will be considered free, and players will bypass the payment step.</AlertDescription>
+          </Alert>
           <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                   <Label htmlFor="amount">Entry Fee</Label>
@@ -146,7 +151,7 @@ export default function PaymentSettings({ basePath }: PaymentSettingsProps) {
                   <Input 
                       id="currency" 
                       value={config?.currency || 'PHP'}
-                      onChange={(e) => setConfig(config ? {...config, currency: e.target.value} : null)}
+                      onChange={(e) => setConfig(config ? {...config, currency: e.target.value} : config)}
                       placeholder="e.g. PHP"
                   />
               </div>
@@ -195,3 +200,5 @@ export default function PaymentSettings({ basePath }: PaymentSettingsProps) {
     </fieldset>
   );
 }
+
+    
