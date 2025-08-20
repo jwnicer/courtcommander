@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 const ADMIN_PIN = '96321478'; // The secret PIN
 
@@ -61,6 +62,7 @@ export default function AdminLayout({
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     // Check session storage on component mount
@@ -100,6 +102,7 @@ export default function AdminLayout({
         title: 'Logged Out',
         description: 'You have been securely logged out.',
     });
+    router.push('/');
   }
 
   const handlePinKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
