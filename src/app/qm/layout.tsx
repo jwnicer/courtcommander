@@ -14,7 +14,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
-const QM_PIN = '654321'; // The secret PIN
+const QM_PIN = '987412'; // The secret PIN
 
 // Create a new, custom DialogContent component
 const CustomDialogContent = React.forwardRef<
