@@ -254,11 +254,12 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     setBusy('pay');
     setOptimistic('confirm'); // Optimistically move to confirmation
     try {
-      await withTimeout(createIntent(base, 'submit_payment', clientId!, {
+      // No timeout on payment submission
+      await createIntent(base, 'submit_payment', clientId!, {
         amountCents: cfg?.amountCents,
         currency: cfg?.currency,
         method: selectedEWallet,
-      }), 20000);
+      });
       toast({ title: 'Payment submitted', description: 'Awaiting admin confirmation.' });
     } catch (e: any) {
       setOptimistic('pay'); // Revert on failure
@@ -481,3 +482,5 @@ export default function PlayerWizard({ orgId, venueId, sessionId, onComplete }: 
     </>
   );
 }
+
+    
