@@ -6,7 +6,8 @@ import { onSnapshot, doc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getClientId } from '@/lib/clientId';
 import LiveView from "@/components/session/LiveView";
-import { Shield, UserPlus, ClipboardList, Loader2 } from "lucide-react";
+import { UserPlus, Loader2 } from "lucide-react";
+import { CourtIcon, RacketIcon } from '@/components/icons/badminton';
 import MatchSuggester from "@/components/ai/MatchSuggester";
 import PlayerWizard from "@/components/session/PlayerWizard";
 import { Button } from "@/components/ui/button";
@@ -133,7 +134,7 @@ function PlayPageContent() {
                 <TooltipTrigger asChild>
                     <Button asChild variant="secondary" size="icon" className="rounded-full shadow-lg">
                         <Link href="/qm">
-                            <ClipboardList />
+                            <CourtIcon />
                             <span className="sr-only">Queue Master</span>
                         </Link>
                     </Button>
@@ -146,7 +147,7 @@ function PlayPageContent() {
                 <TooltipTrigger asChild>
                     <Button asChild variant="secondary" size="icon" className="rounded-full shadow-lg">
                         <Link href="/admin">
-                            <Shield />
+                            <RacketIcon />
                             <span className="sr-only">Admin Panel</span>
                         </Link>
                     </Button>

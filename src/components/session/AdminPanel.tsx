@@ -3,7 +3,8 @@
 
 import type { Session, Participant, Court } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Shield, Settings, BarChart } from 'lucide-react';
+import { Users, Settings, BarChart } from 'lucide-react';
+import { RacketIcon } from '@/components/icons/badminton';
 import { Skeleton } from '../ui/skeleton';
 
 interface AdminPanelProps {
@@ -20,7 +21,7 @@ export default function AdminPanel({ session, participants, courts, basePath }: 
       <Card>
         <CardHeader>
            <CardTitle className="flex items-center gap-2">
-                <Shield />
+                <RacketIcon className="h-6 w-6" />
                 <Skeleton className="h-8 w-48" />
             </CardTitle>
             <Skeleton className="h-4 w-72" />
@@ -44,7 +45,7 @@ export default function AdminPanel({ session, participants, courts, basePath }: 
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Shield />
+                    <RacketIcon className="h-5 w-5" />
                     Admin Overview
                 </CardTitle>
                 <CardDescription>High-level statistics and controls for this session.</CardDescription>

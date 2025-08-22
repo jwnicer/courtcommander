@@ -1,9 +1,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { CourtIcon, RacketIcon } from '@/components/icons/badminton';
 
 export default function TermsPage() {
     const effectiveDate = new Date().toLocaleDateString('en-US', {
@@ -217,7 +217,7 @@ export default function TermsPage() {
                 <TooltipTrigger asChild>
                     <Button asChild variant="secondary" size="icon" className="rounded-full shadow-lg">
                         <Link href="/qm">
-                            <ClipboardList />
+                            <CourtIcon />
                             <span className="sr-only">Queue Master</span>
                         </Link>
                     </Button>
@@ -230,7 +230,7 @@ export default function TermsPage() {
                 <TooltipTrigger asChild>
                     <Button asChild variant="secondary" size="icon" className="rounded-full shadow-lg">
                         <Link href="/admin">
-                            <Shield />
+                            <RacketIcon />
                             <span className="sr-only">Admin Panel</span>
                         </Link>
                     </Button>
