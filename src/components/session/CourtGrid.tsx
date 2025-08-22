@@ -35,6 +35,7 @@ export default function CourtGrid({
             court={court}
             match={match}
             players={players}
+            participants={participants}
             canCoach={canCoach}
             waitingQueue={waitingQueue}
             gameType={gameType}

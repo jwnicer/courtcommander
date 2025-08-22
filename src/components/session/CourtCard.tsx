@@ -12,18 +12,20 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '@/lib/utils';
 import { getClientId } from '@/lib/clientId';
+import { selectBalancedPlayers } from '@/lib/matchmaking';
 
 interface CourtCardProps {
   basePath: string;
   court: Court;
   match?: Match;
   players: Participant[];
+  participants: Participant[];
   canCoach: boolean;
   waitingQueue: QueueItem[];
   gameType: 'singles' | 'doubles';
 }
 
-export default function CourtCard({ basePath, court, match, players, canCoach, waitingQueue, gameType }: CourtCardProps) {
+export default function CourtCard({ basePath, court, match, players, participants, canCoach, waitingQueue, gameType }: CourtCardProps) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const clientId = getClientId();
@@ -31,7 +33,8 @@ export default function CourtCard({ basePath, court, match, players, canCoach, w
   const handleCoachAssign = async () => {
     setLoading(true);
     const playersNeeded = gameType === 'doubles' ? 4 : 2;
-    const playerIds = waitingQueue.slice(0, playersNeeded).map(p => p.userId);
+    const selected = selectBalancedPlayers(waitingQueue, participants, playersNeeded);
+    const playerIds = selected.map(p => p.userId);
 
     if (playerIds.length < playersNeeded) {
       toast({
