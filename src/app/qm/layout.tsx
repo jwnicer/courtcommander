@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Home, KeyRound, Loader2, LogOut, X, ClipboardList } from "lucide-react";
+import { Home, KeyRound, Loader2, LogOut, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import * as DialogPrimitive from "@radix-ui/react-dialog";

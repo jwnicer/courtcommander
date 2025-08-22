@@ -1,34 +1,10 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Bot, CalendarClock, Shield, Trophy, ClipboardList } from 'lucide-react';
-import Link from 'next/link';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-const BadmintonIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-10 w-10 text-primary"
-    data-ai-hint="badminton shuttlecock"
-  >
-    <path d="m15.18 2-6.25 6.25" />
-    <path d="M12.53 3.47 5.28 10.72" />
-    <path d="M10.72 5.28 3.47 12.53" />
-    <path d="M9.75 6.25 2 14" />
-    <path d="M14 22 8.5 16.5" />
-    <path d="m20.5 17.5-5-5" />
-    <path d="m17.5 20.5-5-5" />
-    <path d="M14.5 21.5-9 7" />
-  </svg>
-);
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
+import { ShuttlecockIcon, RacketIcon, CourtIcon, ScoreboardIcon } from '@/components/icons/badminton';
 
 export default function LandingPage() {
   return (
@@ -36,7 +12,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-20 max-w-screen-2xl items-center justify-between">
           <div className="flex items-center gap-3">
-            <BadmintonIcon />
+            <ShuttlecockIcon className="h-10 w-10 text-primary" />
             <h1 className="text-2xl font-semibold tracking-tight">
               Court<span className="text-primary">Commander</span>
             </h1>
@@ -52,8 +28,10 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-grow">
-        <section className="relative overflow-hidden py-24 md:py-32">
-          <div className="container mx-auto text-center">
+        <section className="relative overflow-hidden py-24 md:py-32 bg-gradient-to-b from-primary/5 via-background to-background">
+          <ShuttlecockIcon className="absolute left-8 top-8 h-32 w-32 text-primary/10 -rotate-12" />
+          <ShuttlecockIcon className="absolute right-8 bottom-8 h-40 w-40 text-primary/10 rotate-12" />
+          <div className="container mx-auto text-center relative z-10">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4">
               The Ultimate Badminton
             </h1>
@@ -81,7 +59,7 @@ export default function LandingPage() {
               <Card className="text-center border-2 border-transparent bg-background hover:border-primary hover:shadow-lg transition-all duration-300">
                 <CardHeader>
                   <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-2">
-                    <Bot className="h-8 w-8 text-primary" />
+                    <RacketIcon className="h-8 w-8 text-primary" />
                   </div>
                   <CardTitle className="font-medium">AI-Powered Matchmaking</CardTitle>
                 </CardHeader>
@@ -92,7 +70,7 @@ export default function LandingPage() {
               <Card className="text-center border-2 border-transparent bg-background hover:border-primary hover:shadow-lg transition-all duration-300">
                 <CardHeader>
                   <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-2">
-                    <CalendarClock className="h-8 w-8 text-primary" />
+                    <CourtIcon className="h-8 w-8 text-primary" />
                   </div>
                   <CardTitle className="font-medium">Automated Queue & Courts</CardTitle>
                 </CardHeader>
@@ -103,7 +81,7 @@ export default function LandingPage() {
               <Card className="text-center border-2 border-transparent bg-background hover:border-primary hover:shadow-lg transition-all duration-300">
                 <CardHeader>
                   <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-2">
-                    <Trophy className="h-8 w-8 text-primary" />
+                    <ScoreboardIcon className="h-8 w-8 text-primary" />
                   </div>
                   <CardTitle className="font-medium">Live Session Dashboard</CardTitle>
                 </CardHeader>
@@ -119,7 +97,7 @@ export default function LandingPage() {
       <footer className="py-8 border-t bg-muted/50">
         <div className="container mx-auto text-center text-muted-foreground">
           <div className="flex justify-center items-center gap-2 mb-2">
-            <BadmintonIcon />
+            <ShuttlecockIcon className="h-6 w-6 text-primary" />
             <p className="font-semibold text-foreground">CourtCommander</p>
           </div>
           <p className="text-sm">&copy; {new Date().getFullYear()} - The smartest way to play.</p>
@@ -137,7 +115,7 @@ export default function LandingPage() {
                 <TooltipTrigger asChild>
                     <Button asChild variant="secondary" size="icon" className="rounded-full shadow-lg">
                         <Link href="/qm">
-                            <ClipboardList />
+                            <CourtIcon />
                             <span className="sr-only">Queue Master</span>
                         </Link>
                     </Button>
@@ -150,7 +128,7 @@ export default function LandingPage() {
                 <TooltipTrigger asChild>
                     <Button asChild variant="secondary" size="icon" className="rounded-full shadow-lg">
                         <Link href="/admin">
-                            <Shield />
+                            <RacketIcon />
                             <span className="sr-only">Admin Panel</span>
                         </Link>
                     </Button>

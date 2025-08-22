@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, ClipboardList, Settings } from "lucide-react"
+import { ShuttlecockIcon, CourtIcon, ScoreboardIcon, RacketIcon } from '@/components/icons/badminton'
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -15,22 +15,22 @@ export default function AdminNav() {
     {
       href: "/",
       label: "Home Page",
-      icon: Home
+      icon: ShuttlecockIcon
     },
     {
       href: "/play",
       label: "Live Session",
-      icon: ClipboardList,
+      icon: ScoreboardIcon,
     },
     {
         href: "/qm",
         label: "Queue Master",
-        icon: ClipboardList
+        icon: CourtIcon
     },
     {
       href: "/admin",
       label: "Dashboard",
-      icon: Settings
+      icon: RacketIcon
     },
   ]
 
